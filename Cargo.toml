@@ -1,0 +1,44 @@
+[package]
+name = "xingapi"
+version = "0.1.6"
+authors = ["Shinwoo Park <natural7530@gmail.com>"]
+edition = "2018"
+description = "XingAPI library that supports async/await syntax and multithreading"
+repository = "https://github.com/konan8205/xingapi-rs"
+license = "MPL-2.0"
+include = ["/src/**/*.rs", "/LICENSE", "/README.md"]
+
+[package.metadata.docs.rs]
+default-target = "i686-pc-windows-msvc"
+targets = ["i686-pc-windows-msvc", "i686-pc-windows-gnu"]
+
+[dependencies]
+array-init = "1.0"
+async-channel = "1.6"
+async-lock = "2.3"
+crossbeam-channel = "0.5"
+encoding_rs = { version = "0.8", features = ["fast-hangul-encode"] }
+lazy_static = "1.4"
+libloading = "0.7"
+xingapi-res = { version = "=0.1.6", path = "./res" }
+
+serde = { version = "1.0", features = ["derive"], optional = true }
+
+[dev-dependencies]
+async-std = { version = "1.9", features = ["attributes"] }
+clap = "3.0.0-beta.2"
+ctrlc = "3.1"
+hex-literal = "0.3"
+
+[target.'cfg(all(windows, target_arch = "x86"))'.dependencies.winapi]
+version = "0.3"
+features = ["minwindef", "ntdef", "windef", "winbase", "winuser", "winnt", "basetsd"]
+
+[features]
+default = []
+
+# requires nightly
+simd-accel = ["encoding_rs/simd-accel"]
+
+[workspace]
+members = ["res"]

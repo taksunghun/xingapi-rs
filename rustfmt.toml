@@ -1,0 +1,4 @@
+comment_width = 100
+newline_style = "Unix"
+use_small_heuristics = "Max"
+wrap_comments = true

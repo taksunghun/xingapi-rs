@@ -1,0 +1,141 @@
+// SPDX-License-Identifier: MIT
+
+// 시간당 요청 제한 횟수에 맞춰 여러 가지 TR을 동시에 요청하는 예제입니다.
+
+use clap::Clap;
+use std::{collections::HashMap, time::Duration};
+use xingapi::{
+    data::{Data, DataType},
+    error::ErrorKind,
+    hashmap,
+    response::Message,
+    XingApi,
+};
+
+#[derive(Clap)]
+struct Opts {
+    #[clap(short)]
+    id: String,
+    #[clap(short)]
+    pw: String,
+}
+
+#[async_std::main]
+async fn main() {
+    let opts = Opts::parse();
+    let xingapi = XingApi::new().await.unwrap();
+
+    xingapi.connect("demo.ebestsec.co.kr", 20001, None, None).await.unwrap();
+    println!("server connected");
+
+    let login = xingapi.login(&opts.id, &opts.pw, "", false).await.unwrap();
+    println!("login: {:?}", login);
+    assert!(login.is_ok());
+
+    let t1101_one_sec_limit = xingapi.limit_per_one_sec("t1101").await as u64;
+    let t1101_ten_min_limit = xingapi.limit_per_ten_min("t1101").await as u64;
+    println!("t1101 one_sec_limit: {}", t1101_one_sec_limit);
+    println!("t1101 ten_min_limit: {}", t1101_ten_min_limit);
+
+    let t1764_one_sec_limit = xingapi.limit_per_one_sec("t1764").await as u64;
+    let t1764_ten_min_limit = xingapi.limit_per_ten_min("t1764").await as u64;
+    println!("t1764 one_sec_limit: {}", t1764_one_sec_limit);
+    println!("t1764 ten_min_limit: {}", t1764_ten_min_limit);
+
+    let xingapi_clone = xingapi.clone();
+
+    let t1101_loop = async_std::task::spawn(async move {
+        let xingapi = xingapi_clone;
+
+        let data = Data {
+            code: "t1101".into(),
+            data_type: DataType::Input,
+            blocks: hashmap! {
+                "t1101InBlock" => hashmap! {
+                    "shcode" => "078020",
+                },
+            },
+            arr_blocks: HashMap::new(),
+        };
+
+        for i in 0..20 * t1101_one_sec_limit {
+            let res = loop {
+                let result = xingapi.request(&data, None, None).await;
+                match &result {
+                    Ok(_) => {}
+                    Err(err) => {
+                        if err.kind() == ErrorKind::LimitReached {
+                            println!("t1101: limit reached");
+                            async_std::task::sleep(Duration::from_millis(5)).await;
+                            continue;
+                        }
+                    }
+                }
+
+                break result;
+            }
+            .unwrap();
+
+            let elapsed = res.elapsed();
+
+            assert!(res.is_ok());
+            println!("t1101: index: {}, elapsed: {} ms", i, elapsed.as_millis());
+
+            let wait_duration = Duration::from_secs_f32(1.0 / t1101_one_sec_limit as f32);
+            if wait_duration > elapsed {
+                async_std::task::sleep(wait_duration - elapsed).await;
+            }
+        }
+    });
+
+    let xingapi_clone = xingapi.clone();
+
+    let t1764_loop = async_std::task::spawn(async move {
+        let xingapi = xingapi_clone;
+
+        let data = Data {
+            code: "t1764".into(),
+            data_type: DataType::Input,
+            blocks: hashmap! {
+                "t1764InBlock" => hashmap! {
+                    "shcode" => "096530",
+                    "gubun1" => "0",
+                },
+            },
+            arr_blocks: HashMap::new(),
+        };
+
+        for i in 0..20 * t1764_one_sec_limit + 1 {
+            let res = loop {
+                let result = xingapi.request(&data, None, None).await;
+                match &result {
+                    Ok(_) => {}
+                    Err(err) => {
+                        if err.kind() == ErrorKind::LimitReached {
+                            println!("t1764: limit reached");
+                            async_std::task::sleep(Duration::from_millis(5)).await;
+                            continue;
+                        }
+                    }
+                }
+
+                break result;
+            }
+            .unwrap();
+
+            assert!(res.is_ok());
+            println!("t1764: index: {}, elapsed: {} ms", i, res.elapsed().as_millis());
+
+            let wait_duration = Duration::from_secs_f32(1.0 / t1764_one_sec_limit as f32);
+            async_std::task::sleep(wait_duration).await;
+        }
+    });
+
+    t1101_loop.await;
+    t1764_loop.await;
+
+    xingapi.disconnect().await;
+    println!("server disconnected");
+
+    assert_eq!(xingapi.is_connected().await, false);
+}
