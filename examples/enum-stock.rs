@@ -3,7 +3,6 @@
 // 주식 시장의 종목을 조회하는 예제입니다.
 
 use clap::Clap;
-use std::collections::HashMap;
 use xingapi::{
     data::{Data, DataType},
     hashmap,
@@ -41,7 +40,7 @@ async fn main() {
                         "gubun" => "0",
                     },
                 },
-                arr_blocks: HashMap::new(),
+                arr_blocks: hashmap! {},
             },
             None,
             None,

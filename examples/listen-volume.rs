@@ -12,7 +12,6 @@ use xingapi::{
 };
 
 use std::{
-    collections::HashMap,
     sync::{
         atomic::{AtomicBool, Ordering},
         Arc,
@@ -40,7 +39,7 @@ impl Market {
                             },
                         },
                     },
-                    arr_blocks: HashMap::new(),
+                    arr_blocks: hashmap! {},
                 },
                 None,
                 None,

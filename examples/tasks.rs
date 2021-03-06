@@ -3,7 +3,7 @@
 // 시간당 요청 제한 횟수에 맞춰 여러 가지 TR을 동시에 요청하는 예제입니다.
 
 use clap::Clap;
-use std::{collections::HashMap, time::Duration};
+use std::time::Duration;
 use xingapi::{
     data::{Data, DataType},
     error::ErrorKind,
@@ -55,7 +55,7 @@ async fn main() {
                     "shcode" => "078020",
                 },
             },
-            arr_blocks: HashMap::new(),
+            arr_blocks: hashmap! {},
         };
 
         for i in 0..20 * t1101_one_sec_limit {
@@ -102,7 +102,7 @@ async fn main() {
                     "gubun1" => "0",
                 },
             },
-            arr_blocks: HashMap::new(),
+            arr_blocks: hashmap! {},
         };
 
         for i in 0..20 * t1764_one_sec_limit + 1 {

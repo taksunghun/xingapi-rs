@@ -3,7 +3,6 @@
 // TR을 요청하는 예제입니다.
 
 use clap::Clap;
-use std::collections::HashMap;
 use xingapi::{
     data::{Data, DataType},
     hashmap,
@@ -39,7 +38,7 @@ async fn main() {
                 "dummy" => "",
             },
         },
-        arr_blocks: HashMap::new(),
+        arr_blocks: hashmap! {},
     };
 
     let res = xingapi.request(&data, None, None).await.unwrap();
