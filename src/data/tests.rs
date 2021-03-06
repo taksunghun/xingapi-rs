@@ -46,7 +46,7 @@ fn test_decode_block() {
                     .unwrap()
                 }
             },
-            arr_blocks: HashMap::new(),
+            arr_blocks: hashmap! {},
         };
 
         validate_t1101_data(&data);
@@ -92,7 +92,7 @@ fn test_decode_array_block() {
         let data = Data {
             code: "t1764".into(),
             data_type: DataType::Output,
-            blocks: HashMap::new(),
+            blocks: hashmap! {},
             arr_blocks: hashmap! {
                 "t1764OutBlock" => {
                     decode_array_block(

@@ -21,8 +21,6 @@ use serde::{Deserialize, Serialize};
 ///
 /// ## 예제
 /// ```rust
-/// use std::collections::HashMap;
-///
 /// let block : HashMap<String, String> = hashmap! {
 ///     "shcode" => "096530",
 ///     "gubun" => "0",
@@ -31,6 +29,9 @@ use serde::{Deserialize, Serialize};
 #[macro_export]
 macro_rules! hashmap {
     ($($key:expr => $val:expr),*$(,)?) => {{
+        use std::collections::HashMap;
+
+        #[allow(unused_mut)]
         let mut map = HashMap::new();
         $(map.insert($key.into(), $val.into());)*
         map
