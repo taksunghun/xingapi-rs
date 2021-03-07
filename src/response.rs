@@ -24,10 +24,13 @@ pub trait Message: std::fmt::Display {
 
     /// 정상 처리 여부를 반환합니다.
     ///
-    /// t1764 TR과 같이 정상 처리시에 응답 메시지가 발생하지 않는 경우도 있습니다.
+    /// 기본 구현은 응답 코드가 0보다 같거나 크고 1000보다 작은 경우 참을 반환합니다.
+    /// 코드를 숫자로 변환하지 못한 경우 응답 메시지와 코드가 비어 있으면 참입니다.
+    ///
+    /// t1764 TR과 같이 정상 처리시에 응답 메시지가 발생하지 않는 경우도 고려해야 합니다.
     fn is_ok(&self) -> bool {
-        if let Ok(code) = self.code().parse::<u32>() {
-            code < 1000
+        if let Ok(code) = self.code().parse::<i32>() {
+            code >= 0 && code < 1000
         } else {
             if self.code().is_empty() && self.message().is_empty() {
                 true
@@ -38,6 +41,8 @@ pub trait Message: std::fmt::Display {
     }
 
     /// 처리 실패 여부를 반환합니다.
+    ///
+    /// 기본 구현은 `is_ok()`의 논리 부정 값을 반환합니다.
     fn is_err(&self) -> bool {
         !self.is_ok()
     }
