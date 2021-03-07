@@ -70,12 +70,6 @@ pub struct Data {
     pub arr_blocks: HashMap<String, ArrayBlock>,
 }
 
-impl Data {
-    pub(crate) fn new(name: String, data_type: DataType) -> Data {
-        Self { code: name, data_type, blocks: HashMap::new(), arr_blocks: HashMap::new() }
-    }
-}
-
 pub(crate) fn decode(
     tr_layouts: &HashMap<String, TrLayout>,
     tr_code: &str,
@@ -175,7 +169,13 @@ pub(crate) fn decode_array_block(
 pub(crate) fn decode_non_block(tr_layout: &TrLayout, raw_data: &[u8]) -> Result<Data, DecodeError> {
     assert!(!tr_layout.block);
 
-    let mut data = Data::new(tr_layout.code.to_owned(), DataType::Output);
+    let mut data = Data {
+        code: tr_layout.code.to_owned(),
+        data_type: DataType::Output,
+        blocks: HashMap::new(),
+        arr_blocks: HashMap::new(),
+    };
+
     let mut offset = 0;
 
     for block_layout in tr_layout.out_blocks.iter() {
