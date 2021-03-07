@@ -2,7 +2,13 @@
 
 //! 서버 응답 모듈입니다.
 //!
-//! 응답의 코드나 메시지가 필요하다면 코드에 아래와 같이 [Message](Message) 트레이트를 추가해야
+//! 단순히 응답 결과를 출력하고자 한다면 다음과 같이 `format!`이나 `println!` 매크로를 사용하시면
+//! 됩니다.
+//! ```rust
+//! println!("{:?}", message);
+//! ```
+//!
+//! 그 외에 응답에 따른 처리가 필요한 경우 아래와 같이 [Message](Message) 트레이트를 가져와야
 //! 합니다.
 //! ```rust
 //! use xingapi::response::Message;
@@ -76,7 +82,7 @@ impl std::fmt::Display for LoginResponse {
     }
 }
 
-/// TR 요청에 대한 서버 응답입니다.
+/// 조회 TR에 대한 서버 응답입니다.
 #[derive(Clone, Debug)]
 pub struct QueryResponse {
     code: String,
@@ -88,11 +94,15 @@ pub struct QueryResponse {
 
 impl QueryResponse {
     /// 서버 요청 후 응답까지 소요된 시간을 밀리초 정확도로 반환합니다.
+    ///
+    /// XingAPI의 수신 이벤트에서 반환한 값을 사용합니다.
     pub fn elapsed(&self) -> Duration {
         self.elapsed
     }
 
-    /// 연속 조회 키에 대한 `Option`을 반환합니다. 연속 조회 키는 TR당 하나입니다.
+    /// 연속 조회 키가 존재하는 경우 연속 조회 키를 반환합니다.
+    ///
+    /// 연속 조회 키는 TR당 하나입니다.
     pub fn continue_key(&self) -> Option<&str> {
         self.continue_key.as_deref()
     }
