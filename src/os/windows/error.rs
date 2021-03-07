@@ -36,15 +36,3 @@ impl std::fmt::Display for Win32Error {
 }
 
 impl std::error::Error for Win32Error {}
-
-#[cfg(test)]
-mod tests {
-    use super::Win32Error;
-
-    #[test]
-    fn display_system_error() {
-        let error = Win32Error { code: 0 };
-
-        println!("{}", error);
-    }
-}

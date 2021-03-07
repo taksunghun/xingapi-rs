@@ -67,3 +67,13 @@ pub fn format_message(code: DWORD) -> String {
         message
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::format_message;
+
+    #[test]
+    fn test_format_message() {
+        println!("{:?}", format_message(0));
+    }
+}
