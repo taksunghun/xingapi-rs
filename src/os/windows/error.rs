@@ -31,7 +31,7 @@ impl std::fmt::Debug for Win32Error {
 
 impl std::fmt::Display for Win32Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} ({:#010x})", format_message(self.code), self.code)
+        write!(f, "{} {:#010x}", format_message(self.code).trim_end(), self.code)
     }
 }
 
