@@ -43,8 +43,8 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-async_std = "1.9"
-clap = "3"
+async-std = { version = "1.9", features = ["attributes"] }
+clap = "3.0.0-beta.2"
 xingapi = "0.1"
 ```
 
