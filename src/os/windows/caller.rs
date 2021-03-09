@@ -9,6 +9,7 @@ use crate::error::{EntryError, Error, Win32Error};
 use std::{
     future::Future,
     mem::MaybeUninit,
+    path::Path,
     pin::Pin,
     sync::{
         atomic::{AtomicPtr, Ordering},
@@ -254,7 +255,7 @@ impl Caller {
         unsafe { &*self.entry.load(Ordering::Relaxed) }
     }
 
-    pub fn new(path: Option<&str>) -> Result<Self, EntryError> {
+    pub fn new(path: Option<&Path>) -> Result<Self, EntryError> {
         let path = path.map(|s| s.to_owned());
         let (tx_result, rx_result) = crossbeam_channel::bounded(1);
 

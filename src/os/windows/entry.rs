@@ -12,7 +12,7 @@ use crate::{
 };
 
 use libloading::os::windows::{Library, Symbol};
-use std::mem::MaybeUninit;
+use std::{mem::MaybeUninit, path::Path};
 use winapi::{
     ctypes::{c_int, c_void},
     shared::{
@@ -134,17 +134,19 @@ pub struct Entry {
 }
 
 impl Entry {
-    fn load_lib(path: &str) -> Result<Library, EntryError> {
-        Ok(unsafe { Library::new(path) }
-            .map_err(|error| EntryError::Library { path: path.to_owned(), error })?)
+    fn load_lib(path: &Path) -> Result<Library, EntryError> {
+        Ok(unsafe { Library::new(path) }.map_err(|error| {
+            let path = path.to_string_lossy().into();
+            EntryError::Library { path, error }
+        })?)
     }
 
-    fn load_entry(lib: Library, path: &str) -> Result<Self, EntryError> {
+    fn load_entry(lib: Library, path: &Path) -> Result<Self, EntryError> {
         macro_rules! load_sym {
             ($sym_name:literal) => {
                 unsafe { lib.get($sym_name) }.map_err(|error| EntryError::Symbol {
                     symbol: std::str::from_utf8($sym_name).unwrap().to_owned(),
-                    path: path.to_owned(),
+                    path: path.to_string_lossy().into(),
                     error,
                 })
             };
@@ -189,8 +191,8 @@ impl Entry {
     }
 
     pub fn new() -> Result<Self, EntryError> {
-        let sdk_dl = "C:/eBEST/xingAPI/xingAPI.dll";
-        let dl = "xingAPI.dll";
+        let sdk_dl = Path::new("C:/eBEST/xingAPI/xingAPI.dll");
+        let dl = Path::new("xingAPI.dll");
 
         match Self::load_lib(sdk_dl) {
             Ok(lib) => Self::load_entry(lib, sdk_dl),
@@ -204,7 +206,8 @@ impl Entry {
         }
     }
 
-    pub fn new_with_path(path: &str) -> Result<Self, EntryError> {
+    pub fn new_with_path<P: AsRef<Path>>(path: P) -> Result<Self, EntryError> {
+        let path = path.as_ref();
         Self::load_entry(Self::load_lib(path)?, path)
     }
 

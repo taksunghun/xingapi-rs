@@ -23,7 +23,7 @@ use crate::{
 
 pub use self::real::Real;
 
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, path::Path, sync::Arc};
 use xingapi_res::TrLayout;
 
 /// 지정된 설정으로 XingAPI를 불러오기 위한 builder입니다.
@@ -59,7 +59,7 @@ impl<'a> XingApiBuilder<'a> {
     }
 
     pub async fn build(self) -> Result<Arc<XingApi>, Error> {
-        let caller = Arc::new(Caller::new(self.path)?);
+        let caller = Arc::new(Caller::new(self.path.map(|s| Path::new(s)))?);
 
         let tr_layouts =
             Arc::new(if let Some(val) = self.tr_layouts { val } else { xingapi_res::load()? });
