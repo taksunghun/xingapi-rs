@@ -30,9 +30,9 @@
 pub mod data;
 pub mod error;
 pub mod response;
+pub mod os;
 
 mod euckr;
-mod os;
 
 #[cfg(target_os = "windows")]
 pub use os::windows::{Real, XingApi, XingApiBuilder};
