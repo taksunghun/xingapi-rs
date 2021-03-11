@@ -7,7 +7,7 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
+  default-features:
     runs-on: windows-latest
 
     steps:
@@ -23,7 +23,7 @@ jobs:
           command: build
           args: --target i686-pc-windows-msvc
 
-  build-all:
+  all-features:
     runs-on: windows-latest
     
     steps:
@@ -38,4 +38,3 @@ jobs:
           use-cross: true
           command: build
           args: --target i686-pc-windows-msvc --all-features
-
