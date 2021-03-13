@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 
+//! 윈도우 운영체제 구현에서 발생하는 에러 모듈입니다.
+
 use crate::os::windows::win32::format_message;
 use winapi::{shared::minwindef::DWORD, um::errhandlingapi::GetLastError};
 

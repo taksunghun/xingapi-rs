@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 
+//! 윈도우 운영체제 구현입니다.
+
 #![cfg(windows)]
 
 mod caller;
