@@ -10,10 +10,10 @@ mod raw;
 mod win32;
 
 mod query;
-mod real;
 mod session;
 
 pub mod error;
+pub mod real;
 
 use self::{caller::Caller, query::QueryWindow, session::SessionWindow};
 use crate::{
