@@ -2,8 +2,6 @@
 
 //! 윈도우 운영체제 구현입니다.
 
-#![cfg(windows)]
-
 mod caller;
 mod entry;
 mod raw;

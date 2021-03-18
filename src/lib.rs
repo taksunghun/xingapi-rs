@@ -27,6 +27,8 @@
 //! [futures-docs]: https://docs.rs/futures/
 //! [tokio-docs]: https://docs.rs/tokio/
 
+#![cfg_attr(feature = "doc_cfg", feature(doc_cfg))]
+
 pub mod data;
 pub mod error;
 pub mod response;

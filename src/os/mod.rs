@@ -2,5 +2,6 @@
 
 //! 운영체제별 구현입니다.
 
-#[cfg(target_os = "windows")]
+#[cfg(any(windows, doc))]
+#[cfg_attr(feature = "doc_cfg", doc(cfg(windows)))]
 pub mod windows;

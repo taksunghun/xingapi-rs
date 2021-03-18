@@ -9,6 +9,7 @@ license = "MPL-2.0"
 include = ["/src/**/*.rs", "/LICENSE", "/README.md"]
 
 [package.metadata.docs.rs]
+features = ["doc_cfg"]
 default-target = "i686-pc-windows-msvc"
 targets = ["i686-pc-windows-msvc", "i686-pc-windows-gnu"]
 
@@ -36,8 +37,7 @@ features = ["minwindef", "ntdef", "windef", "winbase", "winuser", "winnt", "base
 
 [features]
 default = []
-
-# requires nightly
+doc_cfg = ["xingapi-res/doc_cfg"]
 simd-accel = ["encoding_rs/simd-accel"]
 
 [workspace]
