@@ -1,0 +1,23 @@
+name: doc
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  i686-pc-windows-msvc:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          target: i686-pc-windows-msvc
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: doc
+          args: --target i686-pc-windows-msvc --all-features
