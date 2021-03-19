@@ -5,7 +5,7 @@
 use super::bindings::DWORD;
 
 #[cfg(windows)]
-use super::{bindings::GetLastError, win32::format_message};
+use super::{bindings::GetLastError, window::format_message};
 
 /// Win32 API 호출 과정에서 발생한 오류 객체입니다.
 pub struct Win32Error {

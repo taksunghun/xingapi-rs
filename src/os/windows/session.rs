@@ -5,7 +5,7 @@ use super::{
     caller::Caller,
     error::Win32Error,
     raw::{XM_DISCONNECT, XM_LOGIN, XM_LOGOUT},
-    win32::Window,
+    window::Window,
 };
 use crate::{error::Error, euckr, response::LoginResponse};
 

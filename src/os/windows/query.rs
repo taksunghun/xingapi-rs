@@ -5,7 +5,7 @@ use super::{
     caller::Caller,
     error::Win32Error,
     raw::{MSG_PACKET, RECV_PACKET, XM_RECEIVE_DATA, XM_TIMEOUT},
-    win32::Window,
+    window::Window,
 };
 use crate::{
     data::{self, Data},

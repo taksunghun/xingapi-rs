@@ -5,7 +5,7 @@ use super::{
     caller::Caller,
     error::Win32Error,
     raw::{RECV_REAL_PACKET, XM_RECEIVE_REAL_DATA},
-    win32::Window,
+    window::Window,
     XingApi,
 };
 use crate::{

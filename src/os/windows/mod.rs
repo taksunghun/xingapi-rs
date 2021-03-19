@@ -9,7 +9,7 @@ mod entry;
 #[cfg(windows)]
 mod raw;
 #[cfg(windows)]
-mod win32;
+mod window;
 
 #[cfg(windows)]
 mod query;

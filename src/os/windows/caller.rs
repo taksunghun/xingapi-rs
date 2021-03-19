@@ -3,7 +3,7 @@
 // XingAPI 및 Win32 API 함수 호출을 별도의 스레드에서 비동기적으로 대신 수행하고
 // 윈도우 메시지 루프를 반복하는 스레드에 대한 모듈입니다.
 
-use super::{bindings, entry::Entry, win32::Window};
+use super::{bindings, entry::Entry, window::Window};
 use crate::error::{EntryError, Error, Win32Error};
 
 use std::{
