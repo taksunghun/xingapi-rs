@@ -31,8 +31,8 @@
 
 pub mod data;
 pub mod error;
-pub mod response;
 pub mod os;
+pub mod response;
 
 mod euckr;
 
