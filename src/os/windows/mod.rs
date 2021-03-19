@@ -8,20 +8,18 @@ mod raw;
 mod win32;
 
 mod query;
+mod real;
 mod session;
 
 pub mod error;
-pub mod real;
 
-use self::{caller::Caller, query::QueryWindow, session::SessionWindow};
+use self::{caller::Caller, query::QueryWindow, real::RealWindow, session::SessionWindow};
 use crate::{
     data::Data,
     error::Error,
-    response::{LoginResponse, QueryResponse},
+    response::{LoginResponse, QueryResponse, RealResponse},
     Account,
 };
-
-pub use self::real::Real;
 
 use std::{collections::HashMap, path::Path, sync::Arc};
 use xingapi_res::TrLayout;
@@ -191,5 +189,53 @@ impl XingApi {
     /// 연결된 서버의 10분당 TR 전송 제한 횟수를 반환합니다.
     pub async fn limit_per_ten_min(&self, tr_code: &str) -> i32 {
         self.caller.handle().read().await.get_tr_count_limit(tr_code).await
+    }
+}
+
+/// 실시간 TR를 수신하는 리시버입니다.
+///
+/// `connect()`, `disconnect()`, `login()`과 같은 연결 및 로그인 함수를 호출하면 기존에 등록된 TR은
+/// 모두 사라지게 됩니다.
+///
+/// 실시간 TR을 등록하면 수신받은 TR은 내부적으로 큐에 저장되며 `recv()`를 호출하여 반드시 처리해야
+/// 합니다. 그렇지 않으면 메모리 누수가 발생할 것입니다.
+pub struct Real {
+    window: RealWindow,
+}
+
+impl Real {
+    /// 실시간 TR을 수신하는 객체를 생성합니다.
+    pub async fn new(xingapi: Arc<XingApi>) -> Result<Self, Error> {
+        Ok(Self { window: RealWindow::new(xingapi).await? })
+    }
+
+    /// 실시간 TR을 지정된 종목 코드로 등록합니다.
+    ///
+    /// `data`는 종목 코드 목록이며 종목 코드는 ASCII 문자로만 구성되어야 합니다.
+    pub async fn register(&self, tr_code: &str, data: Vec<String>) -> Result<(), Error> {
+        self.window.register(tr_code, data).await
+    }
+
+    /// 실시간 TR을 지정된 종목 코드로 등록 해제합니다.
+    ///
+    /// `data`는 종목 코드 목록이며 종목 코드는 ASCII 문자로만 구성되어야 합니다.
+    pub async fn unregister(&self, tr_code: &str, data: Vec<String>) -> Result<(), Error> {
+        self.window.unregister(tr_code, data).await
+    }
+
+    /// 실시간 TR을 모두 등록 해제합니다.
+    pub async fn unregister_all(&self) -> Result<(), Error> {
+        self.window.unregister_all().await
+    }
+
+    /// 서버로부터 수신받은 실시간 TR을 큐에서 가져올 때까지 기다립니다.
+    pub async fn recv(&self) -> RealResponse {
+        self.window.recv().await
+    }
+
+    /// 서버로부터 수신받은 실시간 TR이 있는 경우 실시간 TR을 반환하고,
+    /// 그렇지 않은 경우 `None`을 반환합니다.
+    pub fn try_recv(&self) -> Option<RealResponse> {
+        self.window.try_recv()
     }
 }

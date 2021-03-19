@@ -40,7 +40,7 @@ lazy_static! {
         unsafe {
             RegisterClassExA(&WNDCLASSEXA {
                 cbSize: std::mem::size_of::<WNDCLASSEXA>() as UINT,
-                lpfnWndProc: Some(Real::wndproc),
+                lpfnWndProc: Some(RealWindow::wndproc),
                 cbWndExtra: std::mem::size_of::<usize>() as _,
                 hInstance: GetModuleHandleA(std::ptr::null()),
                 lpszClassName: class_name.as_ptr(),
@@ -74,23 +74,15 @@ impl WindowData {
     }
 }
 
-/// 실시간 TR를 수신하는 리시버입니다.
-///
-/// `connect()`, `disconnect()`, `login()`과 같은 연결 및 로그인 함수를 호출하면 기존에 등록된 TR은
-/// 모두 사라지게 됩니다.
-///
-/// 실시간 TR을 등록하면 수신받은 TR은 내부적으로 큐에 저장되며 `recv()`를 호출하여 반드시 처리해야
-/// 합니다. 그렇지 않으면 메모리 누수가 발생할 것입니다.
-pub struct Real {
+pub struct RealWindow {
     xingapi: Arc<XingApi>,
     window: Arc<Window>,
     _window_data: AtomicPtr<WindowData>,
     rx_res: async_channel::Receiver<IncompleteResponse>,
 }
 
-impl Real {
-    /// 실시간 TR을 수신하는 객체를 생성합니다.
-    pub async fn new(xingapi: Arc<XingApi>) -> Result<Self, Win32Error> {
+impl RealWindow {
+    pub(crate) async fn new(xingapi: Arc<XingApi>) -> Result<Self, Win32Error> {
         let window = Window::new(xingapi.caller.clone(), &REAL_WNDCLASS).await?;
 
         let (tx_res, rx_res) = async_channel::unbounded();
@@ -99,9 +91,6 @@ impl Real {
         Ok(Self { xingapi, window, _window_data, rx_res })
     }
 
-    /// 실시간 TR을 지정된 종목 코드로 등록합니다.
-    ///
-    /// `data`는 종목 코드 목록이며 종목 코드는 ASCII 문자로만 구성되어야 합니다.
     pub async fn register(&self, tr_code: &str, data: Vec<String>) -> Result<(), Error> {
         data.iter().for_each(|ticker| assert!(ticker.is_ascii()));
 
@@ -109,9 +98,6 @@ impl Real {
         handle.advise_real_data(self.window.clone(), tr_code, data).await
     }
 
-    /// 실시간 TR을 지정된 종목 코드로 등록 해제합니다.
-    ///
-    /// `data`는 종목 코드 목록이며 종목 코드는 ASCII 문자로만 구성되어야 합니다.
     pub async fn unregister(&self, tr_code: &str, data: Vec<String>) -> Result<(), Error> {
         data.iter().for_each(|ticker| assert!(ticker.is_ascii()));
 
@@ -119,12 +105,10 @@ impl Real {
         handle.unadvise_real_data(self.window.clone(), tr_code, data).await
     }
 
-    /// 실시간 TR을 모두 등록 해제합니다.
     pub async fn unregister_all(&self) -> Result<(), Error> {
         self.xingapi.caller.unadvise_window(self.window.clone()).await
     }
 
-    /// 서버로부터 수신받은 실시간 TR을 큐에서 가져올 때까지 기다립니다.
     pub async fn recv(&self) -> RealResponse {
         let res = self.rx_res.recv().await.unwrap();
         RealResponse::new(
@@ -138,8 +122,6 @@ impl Real {
         )
     }
 
-    /// 서버로부터 수신받은 실시간 TR이 있는 경우 실시간 TR을 반환하고,
-    /// 그렇지 않은 경우 `None`을 반환합니다.
     pub fn try_recv(&self) -> Option<RealResponse> {
         if let Ok(res) = self.rx_res.try_recv() {
             Some(RealResponse::new(
@@ -194,7 +176,7 @@ impl Real {
     }
 }
 
-impl Drop for Real {
+impl Drop for RealWindow {
     fn drop(&mut self) {
         self.xingapi.caller.unadvise_window(self.window.clone());
     }
