@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 
 use super::{
+    bindings,
     caller::Caller,
     error::Win32Error,
     raw::{XM_DISCONNECT, XM_LOGIN, XM_LOGOUT},
@@ -16,23 +17,13 @@ use std::sync::{
     Arc,
 };
 
-use winapi::{
-    shared::{
-        minwindef::{LPARAM, LRESULT, UINT, WPARAM},
-        windef::HWND,
-    },
-    um::{
-        libloaderapi::GetModuleHandleA,
-        winuser::{
-            DefWindowProcA, GetWindowLongPtrA, SetWindowLongPtrA, GWLP_USERDATA, WM_DESTROY,
-        },
-    },
+use bindings::{
+    DefWindowProcA, GetModuleHandleA, GetWindowLongPtrA, RegisterClassExA, SetWindowLongPtrA,
+    GWLP_USERDATA, HWND, LPARAM, LRESULT, UINT, WM_DESTROY, WNDCLASSEXA, WPARAM,
 };
 
 lazy_static! {
     static ref SESSION_WNDCLASS: Vec<i8> = {
-        use winapi::um::winuser::{RegisterClassExA, WNDCLASSEXA};
-
         let class_name: Vec<i8> =
             b"xingapi::session::SESSION_WNDCLASS\0".iter().map(|&c| c as i8).collect();
 

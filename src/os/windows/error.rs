@@ -2,8 +2,10 @@
 
 //! 윈도우 운영체제 구현에서 발생하는 에러 모듈입니다.
 
-use crate::os::windows::win32::format_message;
-use winapi::{shared::minwindef::DWORD, um::errhandlingapi::GetLastError};
+use super::bindings::DWORD;
+
+#[cfg(windows)]
+use super::{bindings::GetLastError, win32::format_message};
 
 /// Win32 API 호출 과정에서 발생한 오류 객체입니다.
 pub struct Win32Error {
@@ -18,22 +20,30 @@ impl Win32Error {
 
     #[cold]
     pub(crate) fn from_last_error() -> Self {
-        unsafe { Self { code: GetLastError() } }
+        windows_only_impl! {
+            unsafe {
+                Self { code: GetLastError() }
+            }
+        }
     }
 }
 
 impl std::fmt::Debug for Win32Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("SystemError")
-            .field("code", &self.code)
-            .field("message", &format_message(self.code))
-            .finish()
+        windows_only_impl! {
+            f.debug_struct("SystemError")
+                .field("code", &self.code)
+                .field("message", &format_message(self.code))
+                .finish()
+        }
     }
 }
 
 impl std::fmt::Display for Win32Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} {:#010x}", format_message(self.code).trim_end(), self.code)
+        windows_only_impl! {
+            write!(f, "{} {:#010x}", format_message(self.code).trim_end(), self.code)
+        }
     }
 }
 

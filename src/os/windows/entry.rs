@@ -5,21 +5,17 @@
 // XingAPI는 non-thread safe이기 때문에 실제 함수 호출은 단일 스레드에서만 해야 합니다.
 // 따라서 실제 함수 호출을 대신 수행하는 별도의 스레드 객체인 Caller의 구현에 사용합니다.
 
+use super::bindings;
 use crate::{
     error::{EntryError, Error},
     euckr,
     os::windows::raw::XM_OFFSET,
 };
 
-use libloading::os::windows::{Library, Symbol};
 use std::{mem::MaybeUninit, path::Path};
-use winapi::{
-    ctypes::{c_int, c_void},
-    shared::{
-        minwindef::{BOOL, FALSE, LPARAM, TRUE},
-        windef::HWND,
-    },
-};
+
+use bindings::{c_int, c_void, BOOL, FALSE, HWND, LPARAM, TRUE};
+use libloading::os::windows::{Library, Symbol};
 
 // 서버 연결, 로그인
 type Connect = unsafe extern "system" fn(HWND, *const u8, c_int, c_int, c_int, c_int) -> BOOL;

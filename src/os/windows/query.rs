@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 
 use super::{
+    bindings,
     caller::Caller,
     error::Win32Error,
     raw::{MSG_PACKET, RECV_PACKET, XM_RECEIVE_DATA, XM_TIMEOUT},
@@ -26,18 +27,9 @@ use std::{
     },
 };
 
-use winapi::{
-    shared::{
-        minwindef::{LPARAM, LRESULT, UINT, WPARAM},
-        windef::HWND,
-    },
-    um::{
-        libloaderapi::GetModuleHandleA,
-        winuser::{
-            DefWindowProcA, GetWindowLongPtrA, RegisterClassExA, SetWindowLongPtrA, GWLP_USERDATA,
-            WM_DESTROY, WNDCLASSEXA,
-        },
-    },
+use bindings::{
+    DefWindowProcA, GetModuleHandleA, GetWindowLongPtrA, RegisterClassExA, SetWindowLongPtrA,
+    GWLP_USERDATA, HWND, LPARAM, LRESULT, UINT, WM_DESTROY, WNDCLASSEXA, WPARAM,
 };
 
 lazy_static! {

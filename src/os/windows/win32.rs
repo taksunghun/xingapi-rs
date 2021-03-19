@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 
-use super::{caller::Caller, error::Win32Error};
-
+use super::{bindings::HWND, caller::Caller, error::Win32Error};
 use std::sync::Arc;
-use winapi::{ctypes::c_void, shared::minwindef::DWORD, shared::windef::HWND};
 
 #[derive(Clone)]
 pub struct Window {
@@ -62,7 +60,7 @@ pub fn format_message(code: DWORD) -> String {
 
         let message =
             String::from_utf16(std::slice::from_raw_parts(buf, buf_len as usize)).unwrap();
-        LocalFree(buf as *mut c_void);
+        LocalFree(buf as *mut _);
 
         message
     }
