@@ -9,7 +9,7 @@ use self::error::{DecodeError, EncodeError};
 use crate::euckr;
 
 use encoding_rs::EUC_KR;
-use std::{borrow::Cow, collections::HashMap};
+use std::{borrow::Cow, collections::HashMap, ops::Index};
 use xingapi_res::{BlockLayout, TrLayout};
 
 #[cfg(feature = "serde")]
@@ -50,11 +50,72 @@ pub enum DataType {
     Output,
 }
 
-/// non-occurs(단일) block에 대한 HashMap입니다.
-pub type Block = HashMap<String, String>;
+#[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub enum Block {
+    /// non-occurs(단일) block에 대한 HashMap입니다.
+    Block(HashMap<String, String>),
+    /// occurs(배열) block에 대한 HashMap 배열입니다.
+    Array(Vec<HashMap<String, String>>),
+}
 
-/// occurs(배열) block에 대한 HashMap 배열입니다.
-pub type ArrayBlock = Vec<Block>;
+impl Block {
+    pub fn is_block(&self) -> bool {
+        match self {
+            Self::Block(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn as_block(&self) -> Option<&HashMap<String, String>> {
+        match self {
+            Self::Block(block) => Some(block),
+            _ => None,
+        }
+    }
+
+    pub fn as_block_mut(&mut self) -> Option<&mut HashMap<String, String>> {
+        match self {
+            Self::Block(block) => Some(block),
+            _ => None,
+        }
+    }
+
+    pub fn is_array(&self) -> bool {
+        match self {
+            Self::Array(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn as_array(&self) -> Option<&Vec<HashMap<String, String>>> {
+        match self {
+            Self::Array(array) => Some(array),
+            _ => None,
+        }
+    }
+
+    pub fn as_array_mut(&mut self) -> Option<&mut Vec<HashMap<String, String>>> {
+        match self {
+            Self::Array(array) => Some(array),
+            _ => None,
+        }
+    }
+}
+
+impl Index<&str> for Block {
+    type Output = str;
+    fn index(&self, index: &str) -> &Self::Output {
+        &self.as_block().expect("not a single block")[index]
+    }
+}
+
+impl Index<usize> for Block {
+    type Output = HashMap<String, String>;
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.as_array().expect("not an array block")[index]
+    }
+}
 
 /// 서버와 주고받는 데이터를 나타내는 객체입니다.
 #[derive(Clone, Debug, PartialEq)]
@@ -66,8 +127,6 @@ pub struct Data {
     pub data_type: DataType,
     /// non-occurs(단일) block에 대한 HashMap
     pub blocks: HashMap<String, Block>,
-    /// occurs(배열) block에 대한 HashMap
-    pub arr_blocks: HashMap<String, ArrayBlock>,
 }
 
 pub(crate) fn decode(
@@ -85,7 +144,6 @@ pub(crate) fn decode(
             code: tr_layout.code.to_owned(),
             data_type: DataType::Output,
             blocks: HashMap::new(),
-            arr_blocks: HashMap::new(),
         };
 
         for (block_name, raw_data) in block_data {
@@ -94,12 +152,14 @@ pub(crate) fn decode(
                     DecodeError::UnknownBlockName { block_name: block_name.to_string() }
                 })?;
 
-            if block_layout.occurs {
-                data.arr_blocks
-                    .insert(block_name, decode_array_block(tr_layout, block_layout, &raw_data)?);
-            } else {
-                data.blocks.insert(block_name, decode_block(tr_layout, block_layout, &raw_data)?);
-            }
+            data.blocks.insert(
+                block_name,
+                if block_layout.occurs {
+                    decode_array_block(tr_layout, block_layout, &raw_data)?
+                } else {
+                    decode_block(tr_layout, block_layout, &raw_data)?
+                },
+            );
         }
 
         Ok(data)
@@ -118,7 +178,7 @@ pub(crate) fn decode_block(
         return Err(DecodeError::MismatchBufferLength);
     }
 
-    let mut fields = Block::with_capacity(block_layout.fields.len());
+    let mut fields = HashMap::with_capacity(block_layout.fields.len());
     let mut offset = 0;
 
     for field_layout in &block_layout.fields {
@@ -129,7 +189,7 @@ pub(crate) fn decode_block(
         offset += field_layout.len + if tr_layout.attr { 1 } else { 0 };
     }
 
-    Ok(fields)
+    Ok(Block::Block(fields))
 }
 
 // block mode인 occurs(배열) output 데이터를 디코딩합니다.
@@ -137,7 +197,7 @@ pub(crate) fn decode_array_block(
     tr_layout: &TrLayout,
     block_layout: &BlockLayout,
     raw_data: &[u8],
-) -> Result<ArrayBlock, DecodeError> {
+) -> Result<Block, DecodeError> {
     assert!(tr_layout.block && block_layout.occurs);
 
     if raw_data.len() % block_layout.len != 0 {
@@ -146,11 +206,11 @@ pub(crate) fn decode_array_block(
 
     let block_count = raw_data.len() / block_layout.len;
 
-    let mut blocks = ArrayBlock::with_capacity(block_count);
+    let mut blocks = Vec::with_capacity(block_count);
     let mut offset = 0;
 
     for _ in 0..block_count {
-        let mut fields = Block::with_capacity(block_layout.fields.len());
+        let mut fields = HashMap::with_capacity(block_layout.fields.len());
         for field_layout in &block_layout.fields {
             fields.insert(
                 field_layout.name.to_owned(),
@@ -162,7 +222,7 @@ pub(crate) fn decode_array_block(
         blocks.push(fields);
     }
 
-    Ok(blocks)
+    Ok(Block::Array(blocks))
 }
 
 // non-block mode인 output 데이터를 디코딩합니다.
@@ -173,13 +233,12 @@ pub(crate) fn decode_non_block(tr_layout: &TrLayout, raw_data: &[u8]) -> Result<
         code: tr_layout.code.to_owned(),
         data_type: DataType::Output,
         blocks: HashMap::new(),
-        arr_blocks: HashMap::new(),
     };
 
     let mut offset = 0;
 
     for block_layout in tr_layout.out_blocks.iter() {
-        if block_layout.occurs {
+        let block = if block_layout.occurs {
             if offset + 5 > raw_data.len() {
                 return Err(DecodeError::MismatchBufferLength);
             }
@@ -193,10 +252,10 @@ pub(crate) fn decode_non_block(tr_layout: &TrLayout, raw_data: &[u8]) -> Result<
                 return Err(DecodeError::MismatchBufferLength);
             }
 
-            let mut blocks = ArrayBlock::with_capacity(block_count);
+            let mut blocks = Vec::with_capacity(block_count);
 
             for _ in 0..block_count {
-                let mut fields = Block::with_capacity(block_layout.fields.len());
+                let mut fields = HashMap::with_capacity(block_layout.fields.len());
                 for field_layout in &block_layout.fields {
                     fields.insert(
                         field_layout.name.to_owned(),
@@ -208,13 +267,13 @@ pub(crate) fn decode_non_block(tr_layout: &TrLayout, raw_data: &[u8]) -> Result<
                 blocks.push(fields);
             }
 
-            data.arr_blocks.insert(block_layout.name.to_owned(), blocks);
+            Block::Array(blocks)
         } else {
             if offset + block_layout.len > raw_data.len() {
                 return Err(DecodeError::MismatchBufferLength);
             }
 
-            let mut fields = Block::with_capacity(block_layout.fields.len());
+            let mut fields = HashMap::with_capacity(block_layout.fields.len());
             for field_layout in &block_layout.fields {
                 fields.insert(
                     field_layout.name.to_owned(),
@@ -223,8 +282,10 @@ pub(crate) fn decode_non_block(tr_layout: &TrLayout, raw_data: &[u8]) -> Result<
                 offset += field_layout.len + if tr_layout.attr { 1 } else { 0 };
             }
 
-            data.blocks.insert(block_layout.name.to_owned(), fields);
-        }
+            Block::Block(fields)
+        };
+
+        data.blocks.insert(block_layout.name.to_owned(), block);
     }
 
     Ok(data)
@@ -264,10 +325,20 @@ pub(crate) fn encode(
     let mut raw_data: Vec<u8> = Vec::new();
 
     for block_layout in block_layouts {
+        let missing_block = || -> EncodeError {
+            EncodeError::MissingBlock { block_name: block_layout.name.to_owned() }
+        };
+        let mismatch_block_type = || -> EncodeError {
+            EncodeError::MissingBlock { block_name: block_layout.name.to_owned() }
+        };
+
         if block_layout.occurs {
-            let arr_block = data.arr_blocks.get(&block_layout.name).ok_or_else(|| {
-                EncodeError::MissingBlock { block_name: block_layout.name.to_owned() }
-            })?;
+            let arr_block = data
+                .blocks
+                .get(&block_layout.name)
+                .ok_or_else(missing_block)?
+                .as_array()
+                .ok_or_else(mismatch_block_type)?;
 
             if !res.block {
                 // 블럭의 최대 개수는 십진수로 5자리
@@ -285,9 +356,12 @@ pub(crate) fn encode(
                 encode_block(res, block_layout, block, &mut raw_data)?;
             }
         } else {
-            let block = data.blocks.get(&block_layout.name).ok_or_else(|| {
-                EncodeError::MissingBlock { block_name: block_layout.name.to_owned() }
-            })?;
+            let block = data
+                .blocks
+                .get(&block_layout.name)
+                .ok_or_else(missing_block)?
+                .as_block()
+                .ok_or_else(mismatch_block_type)?;
 
             encode_block(res, block_layout, &block, &mut raw_data)?
         }

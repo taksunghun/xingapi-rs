@@ -4,7 +4,7 @@
 
 use clap::Clap;
 use xingapi::{
-    data::{Data, DataType},
+    data::{Block, Data, DataType},
     hashmap,
     response::Message,
     XingApi,
@@ -34,16 +34,15 @@ async fn main() {
         code: "t8425".into(),
         data_type: DataType::Input,
         blocks: hashmap! {
-            "t8425InBlock" => hashmap! {
+            "t8425InBlock" => Block::Block(hashmap! {
                 "dummy" => "",
-            },
+            }),
         },
-        arr_blocks: hashmap! {},
     };
 
     let res = xingapi.request(&data, None, None).await.unwrap();
 
-    for block in &res.data().unwrap().arr_blocks["t8425OutBlock"] {
+    for block in res.data().unwrap().blocks["t8425OutBlock"].as_array().unwrap() {
         println!("tmcode: {:0>4}, tmname: {}", block["tmcode"], block["tmname"]);
     }
 

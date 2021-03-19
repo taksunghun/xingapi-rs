@@ -4,7 +4,7 @@
 
 use clap::Clap;
 use xingapi::{
-    data::{Data, DataType},
+    data::{Block, Data, DataType},
     hashmap,
     response::Message,
     XingApi,
@@ -36,11 +36,10 @@ async fn main() {
                 code: "t8430".into(),
                 data_type: DataType::Input,
                 blocks: hashmap! {
-                    "t8430InBlock" => hashmap! {
+                    "t8430InBlock" => Block::Block(hashmap! {
                         "gubun" => "0",
-                    },
+                    }),
                 },
-                arr_blocks: hashmap! {},
             },
             None,
             None,
@@ -48,7 +47,9 @@ async fn main() {
         .await
         .unwrap();
 
-    let mut stocks: Vec<&str> = res.data().unwrap().arr_blocks["t8430OutBlock"]
+    let mut stocks: Vec<&str> = res.data().unwrap().blocks["t8430OutBlock"]
+        .as_array()
+        .unwrap()
         .iter()
         .map(|block| block["shcode"].as_str())
         .collect();

@@ -2,19 +2,13 @@
 
 #![cfg(test)]
 
-use super::{decode_array_block, decode_block, decode_non_block, encode, Data, DataType};
+use super::{decode_array_block, decode_block, decode_non_block, encode, Block, Data, DataType};
 use crate::hashmap;
 use xingapi_res::{HeaderType, TrLayout};
 
 use hex_literal::hex;
 use lazy_static::lazy_static;
 use std::collections::HashMap;
-
-macro_rules! assert_idx {
-    ($result:expr, {$($key:expr => $value:expr),*$(,)?}) => {
-        $(assert_eq!($result[$key], $value, "wrong value with key: {}", $key);)*
-    };
-}
 
 lazy_static! {
     static ref LAYOUT_MAP: HashMap<String, TrLayout> = xingapi_res::load().unwrap();
@@ -34,7 +28,7 @@ fn test_decode_block() {
             data_type: DataType::Output,
             blocks: hashmap! {
                 "t1101OutBlock" => {
-                        decode_block(
+                    decode_block(
                         tr_layout,
                         tr_layout
                             .out_blocks
@@ -46,7 +40,6 @@ fn test_decode_block() {
                     .unwrap()
                 }
             },
-            arr_blocks: hashmap! {},
         };
 
         validate_t1101_data(&data);
@@ -65,20 +58,20 @@ fn test_decode_array_block() {
         assert!(tr_layout.block);
         assert_eq!(tr_layout.header_type.unwrap(), HeaderType::A);
 
-        let arr_block = decode_array_block(
+        let block = decode_array_block(
             tr_layout,
             tr_layout.out_blocks.iter().find(|b| b.name == "t1104OutBlock1").unwrap(),
             T1104_DATA,
         )
         .unwrap();
 
-        assert_idx!(
-            arr_block[0],
-            {
+        assert_eq!(
+            block,
+            Block::Array(vec![hashmap! {
                 "indx" => "",
                 "gubn" => "1",
                 "vals" => "00007260",
-            }
+            }])
         );
     }
 
@@ -92,8 +85,7 @@ fn test_decode_array_block() {
         let data = Data {
             code: "t1764".into(),
             data_type: DataType::Output,
-            blocks: hashmap! {},
-            arr_blocks: hashmap! {
+            blocks: hashmap! {
                 "t1764OutBlock" => {
                     decode_array_block(
                         tr_layout,
@@ -133,18 +125,16 @@ fn test_encode() {
         code: "t1104".into(),
         data_type: DataType::Input,
         blocks: hashmap! {
-            "t1104InBlock" => hashmap! {
+            "t1104InBlock" => Block::Block(hashmap! {
                 "code" => "096530",
                 "nrec" => "1",
-            }
-        },
-        arr_blocks: hashmap! {
-            "t1104InBlock1" => vec![hashmap! {
+            }),
+            "t1104InBlock1" => Block::Array(vec![hashmap! {
                 "indx" => "0",
                 "gubn" => "1",
                 "dat1" => "1",
                 "dat2" => "1",
-            }],
+            }]),
         },
     };
 
@@ -221,12 +211,11 @@ const T1101_DATA: &[u8] = &hex!(
 fn validate_t1101_data(data: &Data) {
     assert_eq!(data.code, "t1101");
     assert_eq!(data.data_type, DataType::Output);
-
     assert_eq!(data.blocks.len(), 1);
 
     assert_eq!(
         data.blocks["t1101OutBlock"],
-        hashmap! {
+        Block::Block(hashmap! {
             "hname" => "이베스트투자증권",
             "price" => "00006000",
             "sign" => "2",
@@ -313,10 +302,8 @@ fn validate_t1101_data(data: &Data) {
             "open" => "00005910",
             "high" => "00006000",
             "low" => "00005870",
-        }
+        })
     );
-
-    assert_eq!(data.arr_blocks.len(), 0);
 }
 
 // date="2020-10-21", shcode="078020"
@@ -362,12 +349,11 @@ const T1764_DATA: &[u8] = &hex!(
 fn validate_t1764_data(data: &Data) {
     assert_eq!(data.code, "t1764");
     assert_eq!(data.data_type, DataType::Output);
-
-    assert_eq!(data.blocks.len(), 0);
+    assert_eq!(data.blocks.len(), 1);
 
     assert_eq!(
-        data.arr_blocks["t1764OutBlock"],
-        [
+        data.blocks["t1764OutBlock"],
+        Block::Array(vec![
             hashmap! { "rank" => "0", "tradno" => "000", "tradname" => "외국계회원사전체" },
             hashmap! { "rank" => "1", "tradno" => "042", "tradname" => "CS증권" },
             hashmap! { "rank" => "2", "tradno" => "017", "tradname" => "KB증권" },
@@ -387,10 +373,8 @@ fn validate_t1764_data(data: &Data) {
             hashmap! { "rank" => "16", "tradno" => "050", "tradname" => "키움증권" },
             hashmap! { "rank" => "17", "tradno" => "046", "tradname" => "하이증권" },
             hashmap! { "rank" => "18", "tradno" => "003", "tradname" => "한국증권" },
-        ]
+        ])
     );
-
-    assert_eq!(data.arr_blocks.len(), 1);
 }
 
 // date="2021-01-11"
@@ -466,7 +450,7 @@ fn validate_t0424_data(data: &Data) {
 
     assert_eq!(
         data.blocks["t0424OutBlock"],
-        hashmap! {
+        Block::Block(hashmap! {
             "sunamt" => "000000000500007907",
             "dtsunik" => "000000000000000000",
             "mamt" => "000000000001957400",
@@ -474,12 +458,12 @@ fn validate_t0424_data(data: &Data) {
             "cts_expcode" => "",
             "tappamt" => "000000000001965600",
             "tdtsunik" => "000000000000008200",
-        }
+        })
     );
 
     assert_eq!(
-        data.arr_blocks["t0424OutBlock1"],
-        [
+        data.blocks["t0424OutBlock1"],
+        Block::Array(vec![
             hashmap! {
                 "expcode" => "005930",
                 "jangb" => "",
@@ -542,6 +526,6 @@ fn validate_t0424_data(data: &Data) {
                 "tax" => "0000000364",
                 "sininter" => "0000000000",
             }
-        ]
+        ])
     )
 }

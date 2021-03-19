@@ -5,7 +5,7 @@
 use clap::Clap;
 use std::time::Duration;
 use xingapi::{
-    data::{Data, DataType},
+    data::{Block, Data, DataType},
     error::ErrorKind,
     hashmap,
     response::Message,
@@ -51,11 +51,10 @@ async fn main() {
             code: "t1101".into(),
             data_type: DataType::Input,
             blocks: hashmap! {
-                "t1101InBlock" => hashmap! {
+                "t1101InBlock" => Block::Block(hashmap! {
                     "shcode" => "078020",
-                },
+                }),
             },
-            arr_blocks: hashmap! {},
         };
 
         for i in 0..20 * t1101_one_sec_limit {
@@ -97,12 +96,11 @@ async fn main() {
             code: "t1764".into(),
             data_type: DataType::Input,
             blocks: hashmap! {
-                "t1764InBlock" => hashmap! {
+                "t1764InBlock" => Block::Block(hashmap! {
                     "shcode" => "096530",
                     "gubun1" => "0",
-                },
+                }),
             },
-            arr_blocks: hashmap! {},
         };
 
         for i in 0..20 * t1764_one_sec_limit + 1 {

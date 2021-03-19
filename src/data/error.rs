@@ -42,15 +42,28 @@ pub enum EncodeError {
     /// TR 코드를 불러오지 않았거나 알 수 없습니다.
     UnknownTrCode,
     /// block이 누락되었습니다.
-    MissingBlock { block_name: String },
+    MissingBlock {
+        block_name: String,
+    },
+    MismatchBlockType {
+        block_name: String,
+    },
     /// block 최대 개수를 초과했습니다.
     ///
     /// 개수는 5자리 이하의 자연수여야 합니다.
-    ExceedMaxBlockCount { block_name: String },
+    ExceedMaxBlockCount {
+        block_name: String,
+    },
     /// field가 누락되었습니다.
-    MissingField { block_name: String, field_name: String },
+    MissingField {
+        block_name: String,
+        field_name: String,
+    },
     /// field의 최대 길이를 초과했습니다.
-    ExceedFieldLength { block_name: String, field_name: String },
+    ExceedFieldLength {
+        block_name: String,
+        field_name: String,
+    },
 }
 
 impl std::fmt::Display for EncodeError {
@@ -58,6 +71,9 @@ impl std::fmt::Display for EncodeError {
         match self {
             Self::UnknownTrCode => write!(f, "unknown tr code"),
             Self::MissingBlock { block_name } => write!(f, "missing block: {}", block_name),
+            Self::MismatchBlockType { block_name } => {
+                write!(f, "mismatch block type: {}", block_name)
+            }
             Self::MissingField { block_name, field_name } => {
                 write!(f, "missing field: {} in {}", field_name, block_name)
             }

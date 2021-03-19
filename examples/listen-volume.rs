@@ -5,7 +5,7 @@
 use clap::Clap;
 use lazy_static::lazy_static;
 use xingapi::{
-    data::{Data, DataType},
+    data::{Block, Data, DataType},
     hashmap,
     response::Message,
     Real, XingApi,
@@ -32,14 +32,13 @@ impl Market {
                     code: "t8430".into(),
                     data_type: DataType::Input,
                     blocks: hashmap! {
-                        "t8430InBlock" => hashmap! {
+                        "t8430InBlock" => Block::Block(hashmap! {
                             "gubun" => match self {
                                 Self::Kospi => "1",
                                 Self::Kosdaq => "2",
                             },
-                        },
+                        }),
                     },
-                    arr_blocks: hashmap! {},
                 },
                 None,
                 None,
@@ -47,7 +46,9 @@ impl Market {
             .await
             .unwrap();
 
-        res.data().unwrap().arr_blocks["t8430OutBlock"]
+        res.data().unwrap().blocks["t8430OutBlock"]
+            .as_array()
+            .unwrap()
             .iter()
             .find(|block| block["shcode"] == code)
             .is_some()
