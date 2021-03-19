@@ -122,7 +122,7 @@ impl From<ErrorBox> for Error {
     }
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(windows)]
 impl From<Win32Error> for Error {
     fn from(err: Win32Error) -> Self {
         Self::Other(Box::new(err))
@@ -177,12 +177,14 @@ impl std::error::Error for Error {
 /// DLL 로드 과정에서 발생한 에러에 대한 객체입니다.
 #[derive(Debug)]
 pub enum EntryError {
+    /// 라이브러리 로드 에러
     Library {
         /// DLL 경로
         path: String,
         /// 에러
         error: libloading::Error,
     },
+    /// 심볼 로드 에러
     Symbol {
         /// DLL 심볼
         symbol: String,
@@ -191,6 +193,10 @@ pub enum EntryError {
         /// 에러
         error: libloading::Error,
     },
+    /// 해당 라이브러리가 현재 프로세스에서 이미 사용 중입니다.
+    #[cfg(any(windows, doc))]
+    #[cfg_attr(feature = "doc_cfg", doc(cfg(windows)))]
+    LibraryInUse,
 }
 
 impl std::fmt::Display for EntryError {
@@ -204,6 +210,10 @@ impl std::fmt::Display for EntryError {
                 write!(f, "could not load a symbol: {:?}; ", symbol)?;
                 write!(f, "path: {:?}, , error: {}", path, error)
             }
+            #[cfg(any(windows, doc))]
+            Self::LibraryInUse => {
+                write!(f, "a library is already in use in current process")
+            }
         }
     }
 }
@@ -213,6 +223,8 @@ impl std::error::Error for EntryError {
         match self {
             Self::Library { error, .. } => Some(error),
             Self::Symbol { error, .. } => Some(error),
+            #[cfg(any(windows, doc))]
+            Self::LibraryInUse => None,
         }
     }
 }

@@ -12,10 +12,11 @@ use crate::{
     os::windows::raw::XM_OFFSET,
 };
 
-use std::{mem::MaybeUninit, path::Path};
+use lazy_static::lazy_static;
+use libloading::os::windows::{Library, Symbol};
+use std::{mem::MaybeUninit, path::Path, sync::Mutex};
 
 use bindings::{c_int, c_void, BOOL, FALSE, HWND, LPARAM, TRUE};
-use libloading::os::windows::{Library, Symbol};
 
 // 서버 연결, 로그인
 type Connect = unsafe extern "system" fn(HWND, *const u8, c_int, c_int, c_int, c_int) -> BOOL;
@@ -131,6 +132,16 @@ pub struct Entry {
 
 impl Entry {
     fn load_lib(path: &Path) -> Result<Library, EntryError> {
+        lazy_static! {
+            static ref LOAD_LIB_LOCK: Mutex<()> = Mutex::new(());
+        }
+
+        let _lock_guard = LOAD_LIB_LOCK.lock().unwrap();
+
+        if let Ok(_) = Library::open_already_loaded(path) {
+            return Err(EntryError::LibraryInUse);
+        }
+
         Ok(unsafe { Library::new(path) }.map_err(|error| {
             let path = path.to_string_lossy().into();
             EntryError::Library { path, error }
@@ -490,14 +501,23 @@ impl Entry {
 
 #[cfg(test)]
 mod tests {
-    use super::Entry;
+    use super::{Entry, EntryError};
 
     #[test]
-    fn load_entry() -> Result<(), Box<dyn std::error::Error>> {
+    fn test_load_entry() -> Result<(), Box<dyn std::error::Error>> {
         let entry = Entry::new()?;
         println!("api_path: {:?}", entry.get_api_path());
         assert!(!entry.is_connected());
 
         Ok(())
+    }
+
+    #[test]
+    fn test_load_entry_twice() {
+        let _entry = Entry::new().unwrap();
+        match Entry::new() {
+            Err(EntryError::LibraryInUse) => {}
+            _ => panic!("unexpected result"),
+        }
     }
 }
