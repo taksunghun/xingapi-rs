@@ -3,11 +3,14 @@
 use super::{
     bindings,
     caller::Caller,
-    error::Win32Error,
     raw::{XM_DISCONNECT, XM_LOGIN, XM_LOGOUT},
     window::Window,
 };
-use crate::{error::Error, euckr, response::LoginResponse};
+use crate::{
+    error::{Error, Win32Error},
+    euckr,
+    response::LoginResponse,
+};
 
 use async_channel::{Receiver, Sender};
 use async_lock::RwLock;

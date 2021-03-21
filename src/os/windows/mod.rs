@@ -31,8 +31,6 @@ macro_rules! windows_only_impl {
     };
 }
 
-pub mod error;
-
 #[cfg(windows)]
 mod bindings {
     pub use winapi::{

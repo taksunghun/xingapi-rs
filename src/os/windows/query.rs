@@ -3,13 +3,12 @@
 use super::{
     bindings,
     caller::Caller,
-    error::Win32Error,
     raw::{MSG_PACKET, RECV_PACKET, XM_RECEIVE_DATA, XM_TIMEOUT},
     window::Window,
 };
 use crate::{
     data::{self, Data},
-    error::Error,
+    error::{Error, Win32Error},
     euckr,
     response::QueryResponse,
 };

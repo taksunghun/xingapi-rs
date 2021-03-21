@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
 
-use super::{bindings::HWND, caller::Caller, error::Win32Error};
+use super::{bindings::HWND, caller::Caller};
+use crate::error::Win32Error;
+
 use std::sync::Arc;
 
 #[derive(Clone)]

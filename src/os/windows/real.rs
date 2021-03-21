@@ -3,14 +3,13 @@
 use super::{
     bindings,
     caller::Caller,
-    error::Win32Error,
     raw::{RECV_REAL_PACKET, XM_RECEIVE_REAL_DATA},
     window::Window,
     XingApi,
 };
 use crate::{
     data::{self, error::DecodeError},
-    error::Error,
+    error::{Error, Win32Error},
     euckr,
     response::RealResponse,
 };
