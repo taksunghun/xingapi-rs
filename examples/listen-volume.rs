@@ -104,7 +104,7 @@ async fn main() {
 
     let real = Arc::new(Real::new(xingapi.clone()).await.unwrap());
 
-    real.register(tr_code, vec![opts.code.clone()]).await.unwrap();
+    real.subscribe(tr_code, vec![opts.code.clone()]).await.unwrap();
     println!("registered: tr_code: {}, market: {}, ticker: {}", tr_code, market, opts.code);
 
     while !QUIT.load(Ordering::Relaxed) {

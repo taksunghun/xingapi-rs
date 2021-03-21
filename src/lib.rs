@@ -276,32 +276,32 @@ impl Real {
     /// 실시간 TR을 지정된 종목 코드로 등록합니다.
     ///
     /// `data`는 종목 코드 목록이며 종목 코드는 ASCII 문자로만 구성되어야 합니다.
-    pub async fn register(&self, tr_code: &str, data: Vec<String>) -> Result<(), Error> {
+    pub async fn subscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), Error> {
         #[cfg(not(windows))]
         unimplemented!();
 
         #[cfg(windows)]
-        self.0.register(tr_code, data).await
+        self.0.subscribe(tr_code, data).await
     }
 
     /// 실시간 TR을 지정된 종목 코드로 등록 해제합니다.
     ///
     /// `data`는 종목 코드 목록이며 종목 코드는 ASCII 문자로만 구성되어야 합니다.
-    pub async fn unregister(&self, tr_code: &str, data: Vec<String>) -> Result<(), Error> {
+    pub async fn unsubscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), Error> {
         #[cfg(not(windows))]
         unimplemented!();
 
         #[cfg(windows)]
-        self.0.unregister(tr_code, data).await
+        self.0.unsubscribe(tr_code, data).await
     }
 
     /// 실시간 TR을 모두 등록 해제합니다.
-    pub async fn unregister_all(&self) -> Result<(), Error> {
+    pub async fn unsubscribe_all(&self) -> Result<(), Error> {
         #[cfg(not(windows))]
         unimplemented!();
 
         #[cfg(windows)]
-        self.0.unregister_all().await
+        self.0.unsubscribe_all().await
     }
 
     /// 서버로부터 수신받은 실시간 TR을 큐에서 가져올 때까지 기다립니다.

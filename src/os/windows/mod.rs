@@ -205,16 +205,16 @@ impl Real {
         Ok(Self { window: RealWindow::new(xingapi).await? })
     }
 
-    pub async fn register(&self, tr_code: &str, data: Vec<String>) -> Result<(), Error> {
-        self.window.register(tr_code, data).await
+    pub async fn subscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), Error> {
+        self.window.subscribe(tr_code, data).await
     }
 
-    pub async fn unregister(&self, tr_code: &str, data: Vec<String>) -> Result<(), Error> {
-        self.window.unregister(tr_code, data).await
+    pub async fn unsubscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), Error> {
+        self.window.unsubscribe(tr_code, data).await
     }
 
-    pub async fn unregister_all(&self) -> Result<(), Error> {
-        self.window.unregister_all().await
+    pub async fn unsubscribe_all(&self) -> Result<(), Error> {
+        self.window.unsubscribe_all().await
     }
 
     pub async fn recv(&self) -> RealResponse {

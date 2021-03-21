@@ -81,21 +81,21 @@ impl RealWindow {
         Ok(Self { xingapi, window, _window_data, rx_res })
     }
 
-    pub async fn register(&self, tr_code: &str, data: Vec<String>) -> Result<(), Error> {
+    pub async fn subscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), Error> {
         data.iter().for_each(|ticker| assert!(ticker.is_ascii()));
 
         let handle = self.xingapi.caller.handle().read().await;
         handle.advise_real_data(self.window.clone(), tr_code, data).await
     }
 
-    pub async fn unregister(&self, tr_code: &str, data: Vec<String>) -> Result<(), Error> {
+    pub async fn unsubscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), Error> {
         data.iter().for_each(|ticker| assert!(ticker.is_ascii()));
 
         let handle = self.xingapi.caller.handle().read().await;
         handle.unadvise_real_data(self.window.clone(), tr_code, data).await
     }
 
-    pub async fn unregister_all(&self) -> Result<(), Error> {
+    pub async fn unsubscribe_all(&self) -> Result<(), Error> {
         self.xingapi.caller.unadvise_window(self.window.clone()).await
     }
 
