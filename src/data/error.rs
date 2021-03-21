@@ -45,6 +45,7 @@ pub enum EncodeError {
     MissingBlock {
         block_name: String,
     },
+    /// block 타입이 일치하지 않습니다.
     MismatchBlockType {
         block_name: String,
     },
