@@ -31,10 +31,10 @@
 
 pub mod data;
 pub mod error;
-pub mod os;
 pub mod response;
 
 mod euckr;
+mod os;
 
 use crate::{
     data::Data,
