@@ -45,7 +45,7 @@ edition = "2018"
 [dependencies]
 async-std = { version = "1.9", features = ["attributes"] }
 clap = "3.0.0-beta.2"
-xingapi = "0.1"
+xingapi = "0.2"
 ```
 
 프로젝트 디렉터리에 `.cargo/config.toml` 파일을 생성하고 아래와 같이 작성하여
