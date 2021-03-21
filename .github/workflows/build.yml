@@ -7,8 +7,8 @@ on:
     branches: [ master ]
 
 jobs:
-  default-features:
-    runs-on: windows-latest
+  windows-stable:
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v2
@@ -22,8 +22,8 @@ jobs:
           command: build
           args: --target i686-pc-windows-msvc
 
-  all-features:
-    runs-on: windows-latest
+  windows-nightly:
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v2
@@ -36,3 +36,33 @@ jobs:
         with:
           command: build
           args: --target i686-pc-windows-msvc --all-features
+
+  linux-stable:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: x86_64-unknown-linux-gnu
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --target x86_64-unknown-linux-gnu
+
+  linux-nightly:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          target: x86_64-unknown-linux-gnu
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --target x86_64-unknown-linux-gnu --all-features
