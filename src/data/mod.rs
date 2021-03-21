@@ -125,7 +125,6 @@ pub struct Data {
     pub code: String,
     /// 데이터가 요청인지 응답인지에 대한 여부
     pub data_type: DataType,
-    /// non-occurs(단일) block에 대한 HashMap
     pub blocks: HashMap<String, Block>,
 }
 
