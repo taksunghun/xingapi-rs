@@ -68,24 +68,28 @@ use crate::{
     Account,
 };
 
-use std::{collections::HashMap, path::Path, sync::Arc};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 use xingapi_res::TrLayout;
 
 /// 지정된 설정으로 XingAPI를 불러오기 위한 builder입니다.
-pub struct XingApiBuilder<'a> {
-    path: Option<&'a str>,
+pub struct XingApiBuilder {
+    path: Option<PathBuf>,
     tr_layouts: Option<HashMap<String, TrLayout>>,
 }
 
-impl<'a> XingApiBuilder<'a> {
+impl XingApiBuilder {
     /// builder를 생성합니다.
     pub fn new() -> Self {
         Self { path: None, tr_layouts: None }
     }
 
     /// XingAPI DLL의 경로를 지정합니다.
-    pub fn path(mut self, path: &'a str) -> Self {
-        self.path = Some(path);
+    pub fn path<P: AsRef<Path>>(mut self, path: P) -> Self {
+        self.path = Some(path.as_ref().to_owned());
         self
     }
 
@@ -105,7 +109,7 @@ impl<'a> XingApiBuilder<'a> {
 
     pub async fn build(self) -> Result<Arc<XingApi>, Error> {
         windows_only_impl! {
-            let caller = Arc::new(Caller::new(self.path.map(|s| Path::new(s)))?);
+            let caller = Arc::new(Caller::new(self.path.as_deref())?);
 
             let tr_layouts =
                 Arc::new(if let Some(val) = self.tr_layouts { val } else { xingapi_res::load()? });
