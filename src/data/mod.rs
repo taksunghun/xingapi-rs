@@ -105,7 +105,7 @@ impl Block {
 }
 
 impl Index<&str> for Block {
-    type Output = str;
+    type Output = String;
     fn index(&self, index: &str) -> &Self::Output {
         &self.as_block().expect("not a single block")[index]
     }
