@@ -50,12 +50,13 @@ pub enum DataType {
     Output,
 }
 
+/// non-occurs(단일) 및 occurs(배열) block에 대한 enum variant입니다.
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Block {
-    /// non-occurs(단일) block에 대한 HashMap입니다.
+    /// non-occurs(단일) block
     Block(HashMap<String, String>),
-    /// occurs(배열) block에 대한 HashMap 배열입니다.
+    /// occurs(배열) block
     Array(Vec<HashMap<String, String>>),
 }
 
