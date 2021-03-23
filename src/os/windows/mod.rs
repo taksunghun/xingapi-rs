@@ -202,7 +202,9 @@ pub struct Real {
 
 impl Real {
     pub async fn new(xingapi: Arc<XingApi>) -> Result<Self, Error> {
-        Ok(Self { window: RealWindow::new(xingapi).await? })
+        Ok(Self {
+            window: RealWindow::new(xingapi.caller.clone(), xingapi.tr_layouts.clone()).await?,
+        })
     }
 
     pub async fn subscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), Error> {

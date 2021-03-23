@@ -5,7 +5,6 @@ use super::{
     caller::Caller,
     raw::{RECV_REAL_PACKET, XM_RECEIVE_REAL_DATA},
     window::Window,
-    XingApi,
 };
 use crate::{
     data::{self, error::DecodeError},
@@ -15,7 +14,11 @@ use crate::{
 };
 
 use lazy_static::lazy_static;
-use std::sync::{atomic::AtomicPtr, Arc};
+use std::{
+    collections::HashMap,
+    sync::{atomic::AtomicPtr, Arc},
+};
+use xingapi_res::TrLayout;
 
 use bindings::{
     DefWindowProcA, GetModuleHandleA, GetWindowLongPtrA, RegisterClassExA, SetWindowLongPtrA,
@@ -65,38 +68,42 @@ impl WindowData {
 }
 
 pub struct RealWindow {
-    xingapi: Arc<XingApi>,
+    caller: Arc<Caller>,
+    tr_layouts: Arc<HashMap<String, TrLayout>>,
     window: Arc<Window>,
     _window_data: AtomicPtr<WindowData>,
     rx_res: async_channel::Receiver<IncompleteResponse>,
 }
 
 impl RealWindow {
-    pub(crate) async fn new(xingapi: Arc<XingApi>) -> Result<Self, Win32Error> {
-        let window = Window::new(xingapi.caller.clone(), &REAL_WNDCLASS).await?;
+    pub async fn new(
+        caller: Arc<Caller>,
+        tr_layouts: Arc<HashMap<String, TrLayout>>,
+    ) -> Result<Self, Win32Error> {
+        let window = Window::new(caller.clone(), &REAL_WNDCLASS).await?;
 
         let (tx_res, rx_res) = async_channel::unbounded();
         let _window_data = WindowData::new(&window, tx_res);
 
-        Ok(Self { xingapi, window, _window_data, rx_res })
+        Ok(Self { caller, tr_layouts, window, _window_data, rx_res })
     }
 
     pub async fn subscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), Error> {
         data.iter().for_each(|ticker| assert!(ticker.is_ascii()));
 
-        let handle = self.xingapi.caller.handle().read().await;
+        let handle = self.caller.handle().read().await;
         handle.advise_real_data(self.window.clone(), tr_code, data).await
     }
 
     pub async fn unsubscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), Error> {
         data.iter().for_each(|ticker| assert!(ticker.is_ascii()));
 
-        let handle = self.xingapi.caller.handle().read().await;
+        let handle = self.caller.handle().read().await;
         handle.unadvise_real_data(self.window.clone(), tr_code, data).await
     }
 
     pub async fn unsubscribe_all(&self) -> Result<(), Error> {
-        self.xingapi.caller.unadvise_window(self.window.clone()).await
+        self.caller.unadvise_window(self.window.clone()).await
     }
 
     pub async fn recv(&self) -> RealResponse {
@@ -104,7 +111,7 @@ impl RealWindow {
         RealResponse::new(
             res.key,
             res.reg_key,
-            if let Some(layout) = self.xingapi.tr_layouts.get(&res.tr_code) {
+            if let Some(layout) = self.tr_layouts.get(&res.tr_code) {
                 data::decode_non_block(layout, &res.data)
             } else {
                 Err(DecodeError::UnknownTrCode)
@@ -117,7 +124,7 @@ impl RealWindow {
             Some(RealResponse::new(
                 res.key,
                 res.reg_key,
-                if let Some(layout) = self.xingapi.tr_layouts.get(&res.tr_code) {
+                if let Some(layout) = self.tr_layouts.get(&res.tr_code) {
                     data::decode_non_block(layout, &res.data)
                 } else {
                     Err(DecodeError::UnknownTrCode)
@@ -168,6 +175,6 @@ impl RealWindow {
 
 impl Drop for RealWindow {
     fn drop(&mut self) {
-        self.xingapi.caller.unadvise_window(self.window.clone());
+        self.caller.unadvise_window(self.window.clone());
     }
 }
