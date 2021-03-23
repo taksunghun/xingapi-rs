@@ -462,7 +462,7 @@ mod tests {
     use std::sync::Arc;
 
     #[async_std::test]
-    async fn load_caller() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_load_caller() -> Result<(), Box<dyn std::error::Error>> {
         let caller = Arc::new(Caller::new(None)?);
         println!("api_path: {:?}", caller.handle().read().await.get_api_path().await);
         assert!(!caller.handle().read().await.is_connected().await);
