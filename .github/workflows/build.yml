@@ -8,7 +8,7 @@ on:
 
 jobs:
   windows-stable:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
       - uses: actions/checkout@v2
@@ -23,7 +23,7 @@ jobs:
           args: --target i686-pc-windows-msvc
 
   windows-nightly:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
       - uses: actions/checkout@v2

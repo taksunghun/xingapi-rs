@@ -8,7 +8,7 @@ on:
 
 jobs:
   i686-pc-windows-msvc:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
       - uses: actions/checkout@v2
