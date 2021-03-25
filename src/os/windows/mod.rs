@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
 
-//! 윈도우 운영체제 구현입니다.
-
 mod caller;
 mod entry;
 mod raw;
@@ -46,25 +44,21 @@ use std::{
 };
 use xingapi_res::TrLayout;
 
-/// 지정된 설정으로 XingAPI를 불러오기 위한 builder입니다.
 pub struct XingApiBuilder {
     path: Option<PathBuf>,
     tr_layouts: Option<HashMap<String, TrLayout>>,
 }
 
 impl XingApiBuilder {
-    /// builder를 생성합니다.
     pub fn new() -> Self {
         Self { path: None, tr_layouts: None }
     }
 
-    /// XingAPI DLL의 경로를 지정합니다.
     pub fn path<P: AsRef<Path>>(mut self, path: P) -> Self {
         self.path = Some(path.as_ref().to_owned());
         self
     }
 
-    /// XingAPI에서 사용될 RES 데이터를 지정합니다.
     pub fn layouts<I>(mut self, layouts: I) -> Self
     where
         I: IntoIterator<Item = TrLayout>,
