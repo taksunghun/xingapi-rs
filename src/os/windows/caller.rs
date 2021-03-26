@@ -55,9 +55,9 @@ define_fn! {
         Option<String>,
         Option<i32>
     ) -> Result<i32, Error>
-    AdviseRealData(Arc<Window>, String, Vec<String>) -> Result<(), Error>
-    UnadviseRealData(Arc<Window>, String, Vec<String>) -> Result<(), Error>
-    UnadviseWindow(Arc<Window>) -> Result<(), Error>
+    AdviseRealData(Arc<Window>, String, Vec<String>) -> Result<(), ()>
+    UnadviseRealData(Arc<Window>, String, Vec<String>) -> Result<(), ()>
+    UnadviseWindow(Arc<Window>) -> Result<(), ()>
     GetAccountList() -> Vec<String>
     GetAccountName(String) -> String
     GetAccountDetailName(String) -> String
@@ -167,7 +167,7 @@ impl CallerHandle {
         window: Arc<Window>,
         tr_code: &str,
         data: Vec<String>,
-    ) -> RetFuture<Result<(), Error>> {
+    ) -> RetFuture<Result<(), ()>> {
         call!(self, AdviseRealData(window, tr_code, data))
     }
 
@@ -176,7 +176,7 @@ impl CallerHandle {
         window: Arc<Window>,
         tr_code: &str,
         data: Vec<String>,
-    ) -> RetFuture<Result<(), Error>> {
+    ) -> RetFuture<Result<(), ()>> {
         call!(self, UnadviseRealData(window, tr_code, data))
     }
 
@@ -233,7 +233,7 @@ impl Caller {
         call!(self, DestroyWindow(hwnd))
     }
 
-    pub fn unadvise_window(&self, window: Arc<Window>) -> RetFuture<Result<(), Error>> {
+    pub fn unadvise_window(&self, window: Arc<Window>) -> RetFuture<Result<(), ()>> {
         call!(self, UnadviseWindow(window))
     }
 

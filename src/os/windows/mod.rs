@@ -201,15 +201,15 @@ impl Real {
         })
     }
 
-    pub async fn subscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), Error> {
+    pub async fn subscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), ()> {
         self.window.subscribe(tr_code, data).await
     }
 
-    pub async fn unsubscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), Error> {
+    pub async fn unsubscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), ()> {
         self.window.unsubscribe(tr_code, data).await
     }
 
-    pub async fn unsubscribe_all(&self) -> Result<(), Error> {
+    pub async fn unsubscribe_all(&self) -> Result<(), ()> {
         self.window.unsubscribe_all().await
     }
 

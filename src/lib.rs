@@ -276,7 +276,7 @@ impl Real {
     /// 실시간 TR을 지정된 종목 코드로 등록합니다.
     ///
     /// `data`는 종목 코드 목록이며 종목 코드는 ASCII 문자로만 구성되어야 합니다.
-    pub async fn subscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), Error> {
+    pub async fn subscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), ()> {
         #[cfg(not(windows))]
         unimplemented!();
 
@@ -287,7 +287,7 @@ impl Real {
     /// 실시간 TR을 지정된 종목 코드로 등록 해제합니다.
     ///
     /// `data`는 종목 코드 목록이며 종목 코드는 ASCII 문자로만 구성되어야 합니다.
-    pub async fn unsubscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), Error> {
+    pub async fn unsubscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), ()> {
         #[cfg(not(windows))]
         unimplemented!();
 
@@ -296,7 +296,7 @@ impl Real {
     }
 
     /// 실시간 TR을 모두 등록 해제합니다.
-    pub async fn unsubscribe_all(&self) -> Result<(), Error> {
+    pub async fn unsubscribe_all(&self) -> Result<(), ()> {
         #[cfg(not(windows))]
         unimplemented!();
 

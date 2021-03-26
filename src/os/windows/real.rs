@@ -8,7 +8,7 @@ use super::{
 };
 use crate::{
     data::{self, error::DecodeError},
-    error::{Error, Win32Error},
+    error::Win32Error,
     euckr,
     response::RealResponse,
 };
@@ -88,21 +88,21 @@ impl RealWindow {
         Ok(Self { caller, tr_layouts, window, _window_data, rx_res })
     }
 
-    pub async fn subscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), Error> {
+    pub async fn subscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), ()> {
         data.iter().for_each(|ticker| assert!(ticker.is_ascii()));
 
         let handle = self.caller.handle().read().await;
         handle.advise_real_data(self.window.clone(), tr_code, data).await
     }
 
-    pub async fn unsubscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), Error> {
+    pub async fn unsubscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), ()> {
         data.iter().for_each(|ticker| assert!(ticker.is_ascii()));
 
         let handle = self.caller.handle().read().await;
         handle.unadvise_real_data(self.window.clone(), tr_code, data).await
     }
 
-    pub async fn unsubscribe_all(&self) -> Result<(), Error> {
+    pub async fn unsubscribe_all(&self) -> Result<(), ()> {
         self.caller.unadvise_window(self.window.clone()).await
     }
 

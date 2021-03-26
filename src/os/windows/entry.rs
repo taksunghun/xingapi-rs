@@ -331,12 +331,7 @@ impl Entry {
         unsafe { (self.release_message_data)(lparam) }
     }
 
-    pub fn advise_real_data(
-        &self,
-        hwnd: HWND,
-        tr_code: &str,
-        data: &[String],
-    ) -> Result<(), Error> {
+    pub fn advise_real_data(&self, hwnd: HWND, tr_code: &str, data: &[String]) -> Result<(), ()> {
         let max_len = data.iter().map(|s| s.len()).max().unwrap_or(0);
 
         let mut enc_data = String::with_capacity(max_len * data.len());
@@ -352,17 +347,12 @@ impl Entry {
             {
                 Ok(())
             } else {
-                Err(self.get_last_error())
+                Err(())
             }
         }
     }
 
-    pub fn unadvise_real_data(
-        &self,
-        hwnd: HWND,
-        tr_code: &str,
-        data: &[String],
-    ) -> Result<(), Error> {
+    pub fn unadvise_real_data(&self, hwnd: HWND, tr_code: &str, data: &[String]) -> Result<(), ()> {
         let max_len = data.iter().map(|s| s.len()).max().unwrap_or(0);
 
         let mut enc_data = String::with_capacity(max_len * data.len());
@@ -378,17 +368,18 @@ impl Entry {
             {
                 Ok(())
             } else {
-                Err(self.get_last_error())
+                Err(())
             }
         }
     }
 
-    pub fn unadvise_window(&self, hwnd: HWND) -> Result<(), Error> {
+    pub fn unadvise_window(&self, hwnd: HWND) -> Result<(), ()> {
         unsafe {
-            if (self.unadvise_window)(hwnd) == TRUE {
+            // 반환형은 BOOL이지만 에러 코드를 반환하기도 합니다.
+            if (self.unadvise_window)(hwnd) > 0 {
                 Ok(())
             } else {
-                Err(self.get_last_error())
+                Err(())
             }
         }
     }
