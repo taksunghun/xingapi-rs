@@ -89,15 +89,11 @@ impl RealWindow {
     }
 
     pub async fn subscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), ()> {
-        data.iter().for_each(|ticker| assert!(ticker.is_ascii()));
-
         let handle = self.caller.handle().read().await;
         handle.advise_real_data(self.window.clone(), tr_code, data).await
     }
 
     pub async fn unsubscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), ()> {
-        data.iter().for_each(|ticker| assert!(ticker.is_ascii()));
-
         let handle = self.caller.handle().read().await;
         handle.unadvise_real_data(self.window.clone(), tr_code, data).await
     }

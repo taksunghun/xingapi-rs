@@ -332,10 +332,12 @@ impl Entry {
     }
 
     pub fn advise_real_data(&self, hwnd: HWND, tr_code: &str, data: &[String]) -> Result<(), ()> {
-        let max_len = data.iter().map(|s| s.len()).max().unwrap_or(0);
+        if data.iter().find(|s| !s.is_ascii()).is_some() {
+            return Err(());
+        }
 
-        let mut enc_data = String::with_capacity(max_len * data.len());
-        enc_data.extend(data.iter().map(|s| format!("{:0>1$}", s, max_len)));
+        let max_len = data.iter().map(|s| s.len()).max().unwrap_or(0);
+        let enc_data: String = data.iter().map(|s| format!("{:0>1$}", s, max_len)).collect();
 
         unsafe {
             if (self.advise_real_data)(
@@ -353,10 +355,12 @@ impl Entry {
     }
 
     pub fn unadvise_real_data(&self, hwnd: HWND, tr_code: &str, data: &[String]) -> Result<(), ()> {
-        let max_len = data.iter().map(|s| s.len()).max().unwrap_or(0);
+        if data.iter().find(|s| !s.is_ascii()).is_some() {
+            return Err(());
+        }
 
-        let mut enc_data = String::with_capacity(max_len * data.len());
-        enc_data.extend(data.iter().map(|s| format!("{:0>1$}", s, max_len)));
+        let max_len = data.iter().map(|s| s.len()).max().unwrap_or(0);
+        let enc_data: String = data.iter().map(|s| format!("{:0>1$}", s, max_len)).collect();
 
         unsafe {
             if (self.advise_real_data)(
