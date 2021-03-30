@@ -363,7 +363,7 @@ impl Entry {
         let enc_data: String = data.iter().map(|s| format!("{:0>1$}", s, max_len)).collect();
 
         unsafe {
-            if (self.advise_real_data)(
+            if (self.unadvise_real_data)(
                 hwnd,
                 euckr::encode(tr_code).as_ptr(),
                 euckr::encode(&enc_data).as_ptr(),
