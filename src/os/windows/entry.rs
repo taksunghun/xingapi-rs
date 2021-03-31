@@ -63,8 +63,6 @@ type GetTrCountBaseSec = unsafe extern "system" fn(*const u8) -> c_int;
 type GetTrCountRequest = unsafe extern "system" fn(*const u8) -> c_int;
 type GetTrCountLimit = unsafe extern "system" fn(*const u8) -> c_int;
 
-type SetNotifyFlag = unsafe extern "system" fn(BOOL);
-
 // 부가기능
 type RequestService = unsafe extern "system" fn(HWND, *const u8, *const u8) -> c_int;
 type RemoveService = unsafe extern "system" fn(HWND, *const u8, *const u8) -> c_int;
@@ -126,8 +124,6 @@ pub struct Entry {
     unadvise_link_from_hts: Symbol<UnadviseLinkFromHts>,
 
     decompress: Symbol<Decompress>,
-
-    set_notify_flag: Symbol<SetNotifyFlag>,
 }
 
 impl Entry {
@@ -186,7 +182,6 @@ impl Entry {
             get_tr_count_base_sec: load_sym!(b"ETK_GetTRCountBaseSec")?,
             get_tr_count_request: load_sym!(b"ETK_GetTRCountRequest")?,
             get_tr_count_limit: load_sym!(b"ETK_GetTRCountLimit")?,
-            set_notify_flag: load_sym!(b"ETK_SetNotifyFlag")?,
             request_service: load_sym!(b"ETK_RequestService")?,
             remove_service: load_sym!(b"ETK_RemoveService")?,
             request_link_to_hts: load_sym!(b"ETK_RequestLinkToHTS")?,
