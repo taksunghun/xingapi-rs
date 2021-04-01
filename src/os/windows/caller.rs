@@ -291,6 +291,14 @@ impl Caller {
                 // 일정 시간 동안 thread가 parking 됩니다.
                 if let Ok(func) = rx_func.recv_timeout(Duration::from_micros(100)) {
                     Self::dispatch_func(&entry, func);
+
+                    for _ in 1..100 {
+                        if let Ok(func) = rx_func.try_recv() {
+                            Self::dispatch_func(&entry, func);
+                        } else {
+                            break;
+                        }
+                    }
                 } else {
                     if quit {
                         break;
