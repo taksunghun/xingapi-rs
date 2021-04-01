@@ -128,6 +128,7 @@ pub struct Entry {
     is_chart_lib: Symbol<IsChartLib>,
 }
 
+#[allow(dead_code)]
 impl Entry {
     fn load_lib(path: &Path) -> Result<Library, EntryError> {
         lazy_static! {
