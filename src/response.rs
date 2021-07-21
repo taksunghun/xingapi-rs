@@ -53,14 +53,8 @@ pub trait Message: std::fmt::Display {
 /// 로그인 요청에 대한 서버의 응답입니다.
 #[derive(Clone, Debug)]
 pub struct LoginResponse {
-    code: String,
-    message: String,
-}
-
-impl LoginResponse {
-    pub(crate) fn new(code: &str, message: &str) -> Self {
-        Self { code: code.trim_end().to_owned(), message: message.trim_end().to_owned() }
-    }
+    pub(crate) code: String,
+    pub(crate) message: String,
 }
 
 impl Message for LoginResponse {

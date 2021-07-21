@@ -167,9 +167,9 @@ impl SessionWindow {
             }
             XM_LOGIN => {
                 if let Some(tx) = &window_data.tx_res {
-                    let code = unsafe { euckr::decode_ptr(wparam as *const u8) };
-                    let message = unsafe { euckr::decode_ptr(lparam as *const u8) };
-                    let _ = tx.try_send(Some(LoginResponse::new(&code, &message)));
+                    let code = unsafe { euckr::decode_ptr(wparam as _) }.trim_end().to_owned();
+                    let message = unsafe { euckr::decode_ptr(lparam as _) }.trim_end().to_owned();
+                    let _ = tx.try_send(Some(LoginResponse { code, message }));
                 }
             }
             XM_LOGOUT => {}
