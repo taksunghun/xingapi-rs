@@ -7,14 +7,15 @@ use super::{
 };
 use crate::{
     error::{Error, Win32Error},
-    euckr,
     response::LoginResponse,
 };
 
 use async_channel::Sender;
 use async_lock::RwLock;
+use encoding_rs::EUC_KR;
 use lazy_static::lazy_static;
 use std::{
+    ffi::CStr,
     panic::{RefUnwindSafe, UnwindSafe},
     sync::{
         atomic::{AtomicPtr, Ordering},
@@ -167,8 +168,17 @@ impl SessionWindow {
             }
             XM_LOGIN => {
                 if let Some(tx) = &window_data.tx_res {
-                    let code = unsafe { euckr::decode_ptr(wparam as _) }.trim_end().to_owned();
-                    let message = unsafe { euckr::decode_ptr(lparam as _) }.trim_end().to_owned();
+                    let code = EUC_KR
+                        .decode(unsafe { CStr::from_ptr(wparam as _) }.to_bytes())
+                        .0
+                        .trim_end()
+                        .to_owned();
+                    let message = EUC_KR
+                        .decode(unsafe { CStr::from_ptr(lparam as _) }.to_bytes())
+                        .0
+                        .trim_end()
+                        .to_owned();
+
                     let _ = tx.try_send(Some(LoginResponse { code, message }));
                 }
             }
