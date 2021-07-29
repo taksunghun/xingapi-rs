@@ -5,8 +5,8 @@
 
 [xingapi-crate]: https://crates.io/crates/xingapi
 [xingapi-docs-rs]: https://docs.rs/xingapi/
-[xingapi-crate-img]: https://img.shields.io/crates/v/xingapi.svg?style=flat-square
-[xingapi-docs-rs-img]: https://img.shields.io/docsrs/xingapi?style=flat-square
+[xingapi-crate-img]: https://img.shields.io/crates/v/xingapi.svg
+[xingapi-docs-rs-img]: https://docs.rs/xingapi/badge.svg
 
 안전성과 간편성, 최적화를 동시에 추구하는 XingAPI 추상화 구현 라이브러리입니다.
 
