@@ -7,17 +7,8 @@
 //! # 요구 사항
 //! - 이베스트투자증권의 윈도우용 XingAPI 최신 버전
 //! - RES 파일 (TR 레이아웃). DevCenter 프로그램에서 다운로드 받을 수 있습니다.
-//! - 비동기 함수 실행자. 이를 위한 라이브러리로는 [async_std][async-std-docs],
-//!   [futures][futures-docs], [tokio][tokio-docs] 등이 있습니다.
-//!
-//! async_std보다는 tokio runtime을 사용할 것을 추천합니다. async_std에는 실행자가 종료될 때
-//! 서브 스레드를 안전하게 종료하도록 대기하는 기능이 없습니다.
 //!
 //! XingAPI에는 리눅스 버전도 있지만 아직은 윈도우 32비트 버전의 XingAPI만 지원합니다.
-//!
-//! [async-std-docs]: https://docs.rs/async-std/
-//! [futures-docs]: https://docs.rs/futures/
-//! [tokio-docs]: https://docs.rs/tokio/
 
 #![cfg_attr(doc_cfg, feature(doc_cfg))]
 
@@ -61,7 +52,7 @@ pub struct Account {
     pub nickname: String,
 }
 
-/// 지정된 설정으로 XingAPI를 불러오기 위한 builder입니다.
+/// 지정된 설정으로 `XingApi` 객체를 생성하기 위한 빌더입니다.
 #[cfg(any(windows, doc))]
 #[cfg_attr(doc_cfg, doc(cfg(windows)))]
 pub struct XingApiBuilder {
@@ -71,7 +62,7 @@ pub struct XingApiBuilder {
 
 #[cfg(any(windows, doc))]
 impl XingApiBuilder {
-    /// builder를 생성합니다.
+    /// `XingApi` 빌더를 생성합니다.
     pub fn new() -> Self {
         Self { path: None, layouts: Vec::new() }
     }
@@ -82,9 +73,9 @@ impl XingApiBuilder {
         self
     }
 
-    /// XingAPI에서 사용될 RES 데이터를 지정합니다. RES 데이터는 TR 레이아웃을 나타냅니다.
+    /// XingAPI에서 사용될 TR 레이아웃을 지정합니다.
     ///
-    /// RES 데이터가 지정되지 않은 경우 기본 경로에서 불러옵니다.
+    /// TR 레이아웃이 지정되지 않은 경우 기본 경로에서 불러오기를 시도합니다.
     pub fn layouts<I>(mut self, layouts: I) -> Self
     where
         I: IntoIterator<Item = TrLayout>,
@@ -140,7 +131,7 @@ impl XingApi {
         XingApiBuilder::new().build()
     }
 
-    /// 해당하는 설정으로 서버에 연결합니다.
+    /// 서버 연결을 시도합니다.
     pub fn connect(
         &self,
         addr: &str,
@@ -164,7 +155,7 @@ impl XingApi {
         self.0.is_connected()
     }
 
-    /// 서버와의 연결을 중단합니다.
+    /// 서버 연결을 중단합니다.
     pub fn disconnect(&self) {
         #[cfg(not(windows))]
         unimplemented!();
@@ -229,7 +220,7 @@ impl XingApi {
         self.0.server_name()
     }
 
-    /// XingAPI의 디렉터리 경로를 반환합니다.
+    /// XingAPI 공유 라이브러리의 디렉터리 경로를 반환합니다.
     pub fn path(&self) -> String {
         #[cfg(not(windows))]
         unimplemented!();
@@ -348,8 +339,9 @@ impl Real {
         self.0.recv_timeout(timeout)
     }
 
-    /// 서버로부터 수신받은 실시간 TR이 있는 경우 실시간 TR을 반환하고,
-    /// 그렇지 않은 경우 `None`을 반환합니다.
+    /// 서버로부터 수신받은 실시간 TR을 큐에서 가져오기를 시도합니다.
+    ///
+    /// 큐가 비어 있는 경우 `None`을 반환합니다.
     pub fn try_recv(&self) -> Option<RealResponse> {
         #[cfg(not(windows))]
         unimplemented!();
