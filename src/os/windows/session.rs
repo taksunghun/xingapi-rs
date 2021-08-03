@@ -136,45 +136,41 @@ impl SessionWindow {
                 0
             }
             XM_DISCONNECT | XM_LOGIN | XM_LOGOUT => {
-                Self::on_recv_msg(hwnd, msg, wparam, lparam);
+                let window_data = {
+                    let ptr = GetWindowLongPtrA(hwnd, GWLP_USERDATA) as *const RwLock<WindowData>;
+                    assert_ne!(ptr, std::ptr::null());
+                    (*ptr).read().unwrap()
+                };
+
+                match msg {
+                    XM_DISCONNECT => {
+                        if let Some(tx) = &window_data.tx_res {
+                            let _ = tx.try_send(None);
+                        }
+                    }
+                    XM_LOGIN => {
+                        if let Some(tx) = &window_data.tx_res {
+                            let code = EUC_KR
+                                .decode(CStr::from_ptr(wparam as _).to_bytes())
+                                .0
+                                .trim_end()
+                                .to_owned();
+                            let message = EUC_KR
+                                .decode(CStr::from_ptr(lparam as _).to_bytes())
+                                .0
+                                .trim_end()
+                                .to_owned();
+
+                            let _ = tx.try_send(Some(LoginResponse { code, message }));
+                        }
+                    }
+                    XM_LOGOUT => {}
+                    _ => unreachable!(),
+                }
+
                 0
             }
             _ => DefWindowProcA(hwnd, msg, wparam, lparam),
-        }
-    }
-
-    #[inline(always)]
-    fn on_recv_msg(hwnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) {
-        let window_data = unsafe {
-            let ptr = GetWindowLongPtrA(hwnd, GWLP_USERDATA) as *const RwLock<WindowData>;
-            assert_ne!(ptr, std::ptr::null());
-            (*ptr).read().unwrap()
-        };
-
-        match msg {
-            XM_DISCONNECT => {
-                if let Some(tx) = &window_data.tx_res {
-                    let _ = tx.try_send(None);
-                }
-            }
-            XM_LOGIN => {
-                if let Some(tx) = &window_data.tx_res {
-                    let code = EUC_KR
-                        .decode(unsafe { CStr::from_ptr(wparam as _) }.to_bytes())
-                        .0
-                        .trim_end()
-                        .to_owned();
-                    let message = EUC_KR
-                        .decode(unsafe { CStr::from_ptr(lparam as _) }.to_bytes())
-                        .0
-                        .trim_end()
-                        .to_owned();
-
-                    let _ = tx.try_send(Some(LoginResponse { code, message }));
-                }
-            }
-            XM_LOGOUT => {}
-            _ => unreachable!(),
         }
     }
 }
