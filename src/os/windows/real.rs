@@ -93,13 +93,11 @@ impl RealWindow {
     }
 
     pub fn subscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), ()> {
-        let handle = self.caller.handle().read().unwrap();
-        handle.advise_real_data(*self.window, tr_code, data)
+        self.caller.handle().advise_real_data(*self.window, tr_code, data)
     }
 
     pub fn unsubscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), ()> {
-        let handle = self.caller.handle().read().unwrap();
-        handle.unadvise_real_data(*self.window, tr_code, data)
+        self.caller.handle().unadvise_real_data(*self.window, tr_code, data)
     }
 
     pub fn unsubscribe_all(&self) -> Result<(), ()> {

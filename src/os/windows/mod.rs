@@ -53,11 +53,11 @@ impl XingApi {
     }
 
     pub fn is_connected(&self) -> bool {
-        self.caller.handle().read().unwrap().is_connected()
+        self.caller.handle().is_connected()
     }
 
     pub fn disconnect(&self) {
-        self.caller.handle().write().unwrap().disconnect()
+        self.caller.handle().disconnect()
     }
 
     pub fn login(
@@ -80,7 +80,7 @@ impl XingApi {
     }
 
     pub fn accounts(&self) -> Vec<Account> {
-        let handle = self.caller.handle().read().unwrap();
+        let handle = self.caller.handle();
         let codes = handle.get_account_list();
 
         let mut accounts = Vec::with_capacity(codes.len());
@@ -96,31 +96,31 @@ impl XingApi {
     }
 
     pub fn client_ip(&self) -> String {
-        self.caller.handle().read().unwrap().get_client_ip()
+        self.caller.handle().get_client_ip()
     }
 
     pub fn server_name(&self) -> String {
-        self.caller.handle().read().unwrap().get_server_name()
+        self.caller.handle().get_server_name()
     }
 
     pub fn path(&self) -> String {
-        self.caller.handle().read().unwrap().get_api_path()
+        self.caller.handle().get_api_path()
     }
 
     pub fn limit_per_one_sec(&self, tr_code: &str) -> i32 {
-        self.caller.handle().read().unwrap().get_tr_count_per_sec(tr_code)
+        self.caller.handle().get_tr_count_per_sec(tr_code)
     }
 
     pub fn limit_sec_per_once(&self, tr_code: &str) -> i32 {
-        self.caller.handle().read().unwrap().get_tr_count_base_sec(tr_code)
+        self.caller.handle().get_tr_count_base_sec(tr_code)
     }
 
     pub fn count_in_ten_min(&self, tr_code: &str) -> i32 {
-        self.caller.handle().read().unwrap().get_tr_count_request(tr_code)
+        self.caller.handle().get_tr_count_request(tr_code)
     }
 
     pub fn limit_per_ten_min(&self, tr_code: &str) -> i32 {
-        self.caller.handle().read().unwrap().get_tr_count_limit(tr_code)
+        self.caller.handle().get_tr_count_limit(tr_code)
     }
 }
 

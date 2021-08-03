@@ -130,9 +130,8 @@ impl QueryWindow {
         continue_key: Option<&str>,
         timeout: Option<i32>,
     ) -> Result<QueryResponse, Error> {
-        let handle = self.caller.handle().read().unwrap();
         let tr_code = &data.code;
-        let req_id = handle.request(
+        let req_id = self.caller.handle().request(
             *self.window,
             tr_code,
             data::encode(&self.tr_layouts, data)?,

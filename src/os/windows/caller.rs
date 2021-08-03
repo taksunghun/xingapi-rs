@@ -13,7 +13,7 @@ use std::{
     pin::Pin,
     sync::{
         atomic::{AtomicPtr, Ordering},
-        RwLock,
+        RwLock, RwLockReadGuard, RwLockWriteGuard,
     },
     thread::{self, JoinHandle},
     time::Duration,
@@ -48,13 +48,7 @@ define_fn! {
     IsConnected() -> bool
     Disconnect() -> ()
     Login(usize, String, String, String, bool) -> Result<(), Error>
-    Request(
-        usize,
-        String,
-        Vec<u8>,
-        Option<String>,
-        Option<i32>
-    ) -> Result<i32, Error>
+    Request(usize, String, Vec<u8>, Option<String>, Option<i32>) -> Result<i32, Error>
     AdviseRealData(usize, String, Vec<String>) -> Result<(), ()>
     UnadviseRealData(usize, String, Vec<String>) -> Result<(), ()>
     UnadviseWindow(usize) -> Result<(), ()>
@@ -212,8 +206,12 @@ impl Caller {
         std::thread::current().name() == Some("xingapi_caller_thread")
     }
 
-    pub fn handle(&self) -> &RwLock<CallerHandle> {
-        &self.handle
+    pub fn handle(&self) -> RwLockReadGuard<CallerHandle> {
+        self.handle.read().unwrap()
+    }
+
+    pub fn sync_handle(&self) -> RwLockWriteGuard<CallerHandle> {
+        self.handle.write().unwrap()
     }
 
     pub fn entry(&self) -> &Entry {
@@ -411,7 +409,7 @@ mod tests {
     #[test]
     fn test_load_caller() {
         let caller = Arc::new(Caller::new(None).unwrap());
-        println!("api_path: {:?}", caller.handle().read().unwrap().get_api_path());
-        assert!(!caller.handle().read().unwrap().is_connected());
+        println!("api_path: {:?}", caller.handle().get_api_path());
+        assert!(!caller.handle().is_connected());
     }
 }

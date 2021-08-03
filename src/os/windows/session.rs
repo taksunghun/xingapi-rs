@@ -91,8 +91,7 @@ impl SessionWindow {
         timeout: Option<i32>,
         max_packet_size: Option<i32>,
     ) -> Result<(), Error> {
-        let handle = self.caller.handle().write().unwrap();
-        handle.connect(*self.window, addr, port, timeout, max_packet_size)
+        self.caller.sync_handle().connect(*self.window, addr, port, timeout, max_packet_size)
     }
 
     pub fn login(
@@ -102,7 +101,7 @@ impl SessionWindow {
         cert_pw: &str,
         cert_err_dialog: bool,
     ) -> Result<LoginResponse, Error> {
-        let handle = self.caller.handle().write().unwrap();
+        let handle = self.caller.sync_handle();
         let window_data = unsafe { &mut *self.window_data.load(Ordering::Relaxed) };
 
         let (tx_res, rx_res) = mpsc::sync_channel(1);
