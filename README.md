@@ -1,12 +1,10 @@
 # xingapi-rs
 
-[![][xingapi-crate-img]][xingapi-crate]
-[![][xingapi-docs-rs-img]][xingapi-docs-rs]
+[![][crate-img]](https://crates.io/crates/xingapi)
+[![][docs-rs-img]](https://docs.rs/xingapi/)
 
-[xingapi-crate]: https://crates.io/crates/xingapi
-[xingapi-docs-rs]: https://docs.rs/xingapi/
-[xingapi-crate-img]: https://img.shields.io/crates/v/xingapi.svg
-[xingapi-docs-rs-img]: https://docs.rs/xingapi/badge.svg
+[crate-img]: https://img.shields.io/crates/v/xingapi.svg
+[docs-rs-img]: https://docs.rs/xingapi/badge.svg
 
 안전성과 간편성, 최적화를 동시에 추구하는 XingAPI 추상화 구현 라이브러리입니다.
 
@@ -15,8 +13,8 @@
 이베스트투자증권에서 제공하는 XingAPI 32비트 버전 설치 파일을 받아 기본 위치인
 `C:\eBEST\xingAPI`에 설치해주세요.
 
-### Rust 설치
-Rust toolchain을 설치하기 위해선 Visual Studio의 MSVC 컴파일러가 필요합니다.
+### Rust 개발환경 구성
+먼저 Visual Studio에 포함되어 있는 MSVC 컴파일러를 설치해주세요.
 
 [rust-lang.org][rust-lang-start]에서 `rustup-init.exe`를 다운로드 받고 실행하여
 설치해주세요. 64비트 버전을 설치하신 경우 콘솔에 다음의 명령어를 입력하여 직접
@@ -30,21 +28,20 @@ rustup target add i686-pc-windows-msvc
 `cargo new` 명령어를 콘솔에서 사용하여 프로젝트를 생성해주세요.
 
 ```sh
-cargo new login
+cargo new xingapi-login
 ```
 
-`Cargo.toml` 프로젝트 구성 파일에 다음과 같이 의존성 패키지 목록에 `xingapi`,
-`tokio`, `clap`을 추가해주세요.
+`Cargo.toml` 프로젝트 구성 파일에 다음과 같이 의존성 패키지 목록에 `clap`,
+`xingapi`를 추가해주세요.
 
 ```toml
 [package]
-name = "login"
+name = "xingapi-login"
 version = "0.1.0"
 edition = "2018"
 
 [dependencies]
 clap = "3.0.0-beta.2"
-tokio = { version = "1", features = ["macros", "rt-multi-thread"]}
 xingapi = "0.2"
 ```
 
@@ -69,22 +66,21 @@ struct Opts {
     pw: String,
 }
 
-#[tokio::main]
-async fn main() {
+fn main() {
     let opts = Opts::parse();
-    let xingapi = XingApi::new().await.unwrap();
+    let xingapi = XingApi::new().unwrap();
 
-    xingapi.connect("demo.ebestsec.co.kr", 20001, None, None).await.unwrap();
+    xingapi.connect("demo.ebestsec.co.kr", 20001, None, None).unwrap();
     println!("server connected");
 
-    let login = xingapi.login(&opts.id, &opts.pw, "", false).await.unwrap();
+    let login = xingapi.login(&opts.id, &opts.pw, "", false).unwrap();
     println!("login: {:?}", login);
     assert!(login.is_ok());
 
-    xingapi.disconnect().await;
+    xingapi.disconnect();
     println!("server disconnected");
 
-    assert_eq!(xingapi.is_connected().await, false);
+    assert_eq!(xingapi.is_connected(), false);
 }
 ```
 
