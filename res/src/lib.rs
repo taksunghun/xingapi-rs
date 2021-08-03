@@ -31,7 +31,7 @@ pub fn load_from_path<P: AsRef<Path>>(path: P) -> Result<HashMap<String, TrLayou
             continue;
         }
 
-        tasks.push(thread::spawn(move || -> Result<TrLayout, LoadError> {
+        let task = move || -> Result<TrLayout, LoadError> {
             let raw_data = fs::read(&file_path)?;
             let (data, _, had_errors) = EUC_KR.decode(&raw_data);
             if had_errors {
@@ -39,7 +39,9 @@ pub fn load_from_path<P: AsRef<Path>>(path: P) -> Result<HashMap<String, TrLayou
             }
 
             data.parse().map_err(|err| LoadError::Parse(file_path, err))
-        }));
+        };
+
+        tasks.push(thread::Builder::new().stack_size(1024 * 256).spawn(task).unwrap());
     }
 
     let mut res_tbl: HashMap<String, TrLayout> = HashMap::new();
