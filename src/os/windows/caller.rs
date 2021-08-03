@@ -106,7 +106,7 @@ impl CallerHandle {
     pub fn is_connected(&self) -> bool {
         call!(self, IsConnected())
     }
-    pub fn disconnect(&self) -> () {
+    pub fn disconnect(&self) {
         call!(self, Disconnect())
     }
 
@@ -337,7 +337,8 @@ impl Caller {
                 let _ = tx_ret.try_send(entry.is_connected());
             }
             CallerFn::Disconnect { args: (), tx_ret } => {
-                let _ = tx_ret.try_send(entry.disconnect());
+                entry.disconnect();
+                let _ = tx_ret.try_send(());
             }
             CallerFn::Login { args: (hwnd, id, pw, cert_pw, cert_err_dialog), tx_ret } => {
                 let _ = tx_ret.try_send(entry.login(hwnd, &id, &pw, &cert_pw, cert_err_dialog));

@@ -333,7 +333,7 @@ impl BlockLayout {
 
 impl AsRef<BlockLayout> for BlockLayout {
     fn as_ref(&self) -> &BlockLayout {
-        &self
+        self
     }
 }
 
@@ -454,6 +454,6 @@ impl FieldLayout {
 
 impl AsRef<FieldLayout> for FieldLayout {
     fn as_ref(&self) -> &FieldLayout {
-        &self
+        self
     }
 }

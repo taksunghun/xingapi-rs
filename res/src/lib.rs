@@ -38,7 +38,7 @@ pub fn load_from_path<P: AsRef<Path>>(path: P) -> Result<HashMap<String, TrLayou
                 return Err(LoadError::Decode(file_path));
             }
 
-            Ok(data.parse().map_err(|err| LoadError::Parse(file_path, err))?)
+            data.parse().map_err(|err| LoadError::Parse(file_path, err))
         }));
     }
 

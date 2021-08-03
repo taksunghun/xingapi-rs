@@ -373,7 +373,7 @@ pub(crate) fn encode(
                 .as_block()
                 .ok_or_else(mismatch_block_type)?;
 
-            encode_block(res, block_layout, &block, &mut raw_data)?
+            encode_block(res, block_layout, block, &mut raw_data)?
         }
     }
 

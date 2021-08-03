@@ -92,8 +92,8 @@ impl WindowData {
         tr_layouts: &Arc<HashMap<String, TrLayout>>,
     ) -> AtomicPtr<Self> {
         let mut data = AtomicPtr::new(Box::into_raw(Box::new(WindowData {
-            caller: Arc::downgrade(&caller),
-            tr_layouts: Arc::downgrade(&tr_layouts),
+            caller: Arc::downgrade(caller),
+            tr_layouts: Arc::downgrade(tr_layouts),
             res_tbl: array_init(|_| None),
             tx_res_tbl: array_init(|_| Mutex::new(None)),
         })));
@@ -135,7 +135,7 @@ impl QueryWindow {
         let req_id = handle.request(
             *self.window,
             tr_code,
-            data::encode(&self.tr_layouts, &data)?,
+            data::encode(&self.tr_layouts, data)?,
             continue_key,
             timeout,
         )?;

@@ -57,6 +57,7 @@ impl<'a> StrRead<'a> {
     }
 
     fn skip_until_not_comment(state: &mut StrReadState) -> Option<()> {
+        #[allow(clippy::while_let_on_iterator)]
         while let Some((_, ch)) = state.iter.next() {
             if ch == '*' {
                 if let Some((_, ch)) = state.iter.clone().next() {
@@ -141,7 +142,7 @@ impl<'a> Read<'a> for StrRead<'a> {
             }
         }
 
-        Some(&self.string[start_idx..end_idx].trim())
+        Some(self.string[start_idx..end_idx].trim())
     }
 
     fn position(&self) -> Position {
