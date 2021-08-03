@@ -7,16 +7,14 @@ use super::entry::Entry;
 use crate::error::{EntryError, Error, Win32Error};
 
 use std::{
-    future::Future,
     mem::MaybeUninit,
     panic::{RefUnwindSafe, UnwindSafe},
     path::Path,
     pin::Pin,
     sync::{
         atomic::{AtomicPtr, Ordering},
-        Arc, Mutex,
+        RwLock,
     },
-    task::{Context, Poll, Waker},
     thread::{self, JoinHandle},
     time::Duration,
 };
@@ -35,7 +33,6 @@ macro_rules! define_fn {
             $($func_camel_case {
                 args: ($($arg,)*),
                 tx_ret: crossbeam_channel::Sender<$ret>,
-                waker: Arc<Mutex<Option<Waker>>>,
             },)*
         }
     };
@@ -74,45 +71,16 @@ define_fn! {
     GetTrCountLimit(String) -> i32
 }
 
-// caller 스레드에서 호출될 함수의 반환을 기다리는 Future입니다.
-pub struct RetFuture<T> {
-    rx_ret: crossbeam_channel::Receiver<T>,
-    waker: Arc<Mutex<Option<Waker>>>,
-}
-
-impl<T> Future for RetFuture<T> {
-    type Output = T;
-    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        if let Ok(ret) = self.rx_ret.try_recv() {
-            Poll::Ready(ret)
-        } else {
-            *self.waker.lock().unwrap() = Some(cx.waker().clone());
-            Poll::Pending
-        }
-    }
-}
-
-impl<T> Drop for RetFuture<T> {
-    fn drop(&mut self) {
-        *self.waker.lock().unwrap() = None;
-    }
-}
-
 macro_rules! call {
     ($self:ident, $func_camel_case:ident($($arg:expr$(,)?)*)) => {{
         let (tx_ret, rx_ret) = crossbeam_channel::bounded(1);
-        let waker = Arc::new(Mutex::new(None));
 
         $self.tx_func.send(CallerFn::$func_camel_case {
             args: ($($arg.into(),)*),
             tx_ret,
-            waker: waker.clone(),
         }).unwrap();
 
-        RetFuture {
-            rx_ret,
-            waker
-        }
+        rx_ret.recv().unwrap()
     }};
 }
 
@@ -131,14 +99,14 @@ impl CallerHandle {
         port: u16,
         timeout: Option<i32>,
         max_packet_size: Option<i32>,
-    ) -> RetFuture<Result<(), Error>> {
+    ) -> Result<(), Error> {
         call!(self, Connect(hwnd, addr, port, timeout, max_packet_size))
     }
 
-    pub fn is_connected(&self) -> RetFuture<bool> {
+    pub fn is_connected(&self) -> bool {
         call!(self, IsConnected())
     }
-    pub fn disconnect(&self) -> RetFuture<()> {
+    pub fn disconnect(&self) -> () {
         call!(self, Disconnect())
     }
 
@@ -149,7 +117,7 @@ impl CallerHandle {
         pw: &str,
         cert_pw: &str,
         cert_err_dialog: bool,
-    ) -> RetFuture<Result<(), Error>> {
+    ) -> Result<(), Error> {
         call!(self, Login(hwnd, id, pw, cert_pw, cert_err_dialog))
     }
 
@@ -160,7 +128,7 @@ impl CallerHandle {
         data: Vec<u8>,
         continue_key: Option<&str>,
         timeout: Option<i32>,
-    ) -> RetFuture<Result<i32, Error>> {
+    ) -> Result<i32, Error> {
         let continue_key = continue_key.map(|s| s.to_owned());
         call!(self, Request(hwnd, tr_code, data, continue_key, timeout))
     }
@@ -170,7 +138,7 @@ impl CallerHandle {
         hwnd: usize,
         tr_code: &str,
         data: Vec<String>,
-    ) -> RetFuture<Result<(), ()>> {
+    ) -> Result<(), ()> {
         call!(self, AdviseRealData(hwnd, tr_code, data))
     }
 
@@ -179,41 +147,41 @@ impl CallerHandle {
         hwnd: usize,
         tr_code: &str,
         data: Vec<String>,
-    ) -> RetFuture<Result<(), ()>> {
+    ) -> Result<(), ()> {
         call!(self, UnadviseRealData(hwnd, tr_code, data))
     }
 
-    pub fn get_account_list(&self) -> RetFuture<Vec<String>> {
+    pub fn get_account_list(&self) -> Vec<String> {
         call!(self, GetAccountList())
     }
-    pub fn get_account_name(&self, account: &str) -> RetFuture<String> {
+    pub fn get_account_name(&self, account: &str) -> String {
         call!(self, GetAccountName(account))
     }
-    pub fn get_account_detail_name(&self, account: &str) -> RetFuture<String> {
+    pub fn get_account_detail_name(&self, account: &str) -> String {
         call!(self, GetAccountDetailName(account))
     }
-    pub fn get_account_nickname(&self, account: &str) -> RetFuture<String> {
+    pub fn get_account_nickname(&self, account: &str) -> String {
         call!(self, GetAccountNickname(account))
     }
-    pub fn get_client_ip(&self) -> RetFuture<String> {
+    pub fn get_client_ip(&self) -> String {
         call!(self, GetClientIp())
     }
-    pub fn get_server_name(&self) -> RetFuture<String> {
+    pub fn get_server_name(&self) -> String {
         call!(self, GetServerName())
     }
-    pub fn get_api_path(&self) -> RetFuture<String> {
+    pub fn get_api_path(&self) -> String {
         call!(self, GetApiPath())
     }
-    pub fn get_tr_count_per_sec(&self, tr_code: &str) -> RetFuture<i32> {
+    pub fn get_tr_count_per_sec(&self, tr_code: &str) -> i32 {
         call!(self, GetTrCountPerSec(tr_code))
     }
-    pub fn get_tr_count_base_sec(&self, tr_code: &str) -> RetFuture<i32> {
+    pub fn get_tr_count_base_sec(&self, tr_code: &str) -> i32 {
         call!(self, GetTrCountBaseSec(tr_code))
     }
-    pub fn get_tr_count_request(&self, tr_code: &str) -> RetFuture<i32> {
+    pub fn get_tr_count_request(&self, tr_code: &str) -> i32 {
         call!(self, GetTrCountRequest(tr_code))
     }
-    pub fn get_tr_count_limit(&self, tr_code: &str) -> RetFuture<i32> {
+    pub fn get_tr_count_limit(&self, tr_code: &str) -> i32 {
         call!(self, GetTrCountLimit(tr_code))
     }
 }
@@ -223,20 +191,20 @@ pub struct Caller {
     join_handle: Option<JoinHandle<()>>,
     tx_func: crossbeam_channel::Sender<CallerFn>,
     tx_quit: crossbeam_channel::Sender<()>,
-    handle: async_lock::RwLock<CallerHandle>,
+    handle: RwLock<CallerHandle>,
     entry: AtomicPtr<Entry>,
 }
 
 impl Caller {
-    pub fn create_window(&self, class_name: &[i8]) -> RetFuture<Result<usize, Win32Error>> {
+    pub fn create_window(&self, class_name: &[i8]) -> Result<usize, Win32Error> {
         call!(self, CreateWindow(class_name.to_owned()))
     }
 
-    pub fn destroy_window(&self, hwnd: usize) -> RetFuture<Result<(), Win32Error>> {
+    pub fn destroy_window(&self, hwnd: usize) -> Result<(), Win32Error> {
         call!(self, DestroyWindow(hwnd))
     }
 
-    pub fn unadvise_window(&self, hwnd: usize) -> RetFuture<Result<(), ()>> {
+    pub fn unadvise_window(&self, hwnd: usize) -> Result<(), ()> {
         call!(self, UnadviseWindow(hwnd))
     }
 
@@ -244,7 +212,7 @@ impl Caller {
         std::thread::current().name() == Some("xingapi_caller_thread")
     }
 
-    pub fn handle(&self) -> &async_lock::RwLock<CallerHandle> {
+    pub fn handle(&self) -> &RwLock<CallerHandle> {
         &self.handle
     }
 
@@ -323,24 +291,15 @@ impl Caller {
             join_handle,
             tx_func: tx_func.clone(),
             tx_quit,
-            handle: async_lock::RwLock::new(CallerHandle { tx_func }),
+            handle: RwLock::new(CallerHandle { tx_func }),
             entry,
         })
     }
 
     fn dispatch_func(entry: &Entry, func: CallerFn) {
-        macro_rules! ret {
-            ($tx_ret:ident, $waker:ident, $ret:expr) => {{
-                let _ = $tx_ret.try_send($ret);
-                if let Some(waker) = $waker.lock().unwrap().take() {
-                    waker.wake();
-                }
-            }};
-        }
-
         match func {
             // Win32 API
-            CallerFn::CreateWindow { args: (class_name,), tx_ret, waker } => {
+            CallerFn::CreateWindow { args: (class_name,), tx_ret } => {
                 #[rustfmt::skip]
                 let hwnd = unsafe {
                     CreateWindowExA(
@@ -355,94 +314,79 @@ impl Caller {
                     )
                 };
 
-                ret!(
-                    tx_ret,
-                    waker,
-                    if !hwnd.is_null() {
-                        Ok(hwnd as usize)
-                    } else {
-                        Err(Win32Error::from_last_error())
-                    }
-                )
+                let _ = tx_ret.try_send(if !hwnd.is_null() {
+                    Ok(hwnd as usize)
+                } else {
+                    Err(Win32Error::from_last_error())
+                });
             }
-            CallerFn::DestroyWindow { args: (hwnd,), tx_ret, waker } => {
-                ret!(
-                    tx_ret,
-                    waker,
-                    if unsafe { DestroyWindow(hwnd as _) } == TRUE {
-                        Ok(())
-                    } else {
-                        Err(Win32Error::from_last_error())
-                    }
-                )
+            CallerFn::DestroyWindow { args: (hwnd,), tx_ret } => {
+                let _ = tx_ret.try_send(if unsafe { DestroyWindow(hwnd as _) } == TRUE {
+                    Ok(())
+                } else {
+                    Err(Win32Error::from_last_error())
+                });
             }
 
             // XingAPI
-            CallerFn::Connect {
-                args: (hwnd, addr, port, timeout, max_packet_size),
-                tx_ret,
-                waker,
-            } => {
-                ret!(tx_ret, waker, entry.connect(hwnd, &addr, port, timeout, max_packet_size))
+            CallerFn::Connect { args: (hwnd, addr, port, timeout, packet_len_limit), tx_ret } => {
+                let _ =
+                    tx_ret.try_send(entry.connect(hwnd, &addr, port, timeout, packet_len_limit));
             }
-            CallerFn::IsConnected { args: (), tx_ret, waker } => {
-                ret!(tx_ret, waker, entry.is_connected())
+            CallerFn::IsConnected { args: (), tx_ret } => {
+                let _ = tx_ret.try_send(entry.is_connected());
             }
-            CallerFn::Disconnect { args: (), tx_ret, waker } => {
-                ret!(tx_ret, waker, entry.disconnect())
+            CallerFn::Disconnect { args: (), tx_ret } => {
+                let _ = tx_ret.try_send(entry.disconnect());
             }
-            CallerFn::Login { args: (hwnd, id, pw, cert_pw, cert_err_dialog), tx_ret, waker } => {
-                ret!(tx_ret, waker, entry.login(hwnd, &id, &pw, &cert_pw, cert_err_dialog))
+            CallerFn::Login { args: (hwnd, id, pw, cert_pw, cert_err_dialog), tx_ret } => {
+                let _ = tx_ret.try_send(entry.login(hwnd, &id, &pw, &cert_pw, cert_err_dialog));
             }
-            CallerFn::Request {
-                args: (hwnd, tr_code, data, continue_key, timeout),
-                tx_ret,
-                waker,
-            } => {
+            CallerFn::Request { args: (hwnd, tr_code, data, continue_key, timeout), tx_ret } => {
                 let ret = entry.request(hwnd, &tr_code, &data, continue_key.as_deref(), timeout);
-                ret!(tx_ret, waker, ret)
+                let _ = tx_ret.try_send(ret);
             }
-            CallerFn::AdviseRealData { args: (hwnd, tr_code, data), tx_ret, waker } => {
-                ret!(tx_ret, waker, entry.advise_real_data(hwnd, &tr_code, &data))
+            CallerFn::AdviseRealData { args: (hwnd, tr_code, data), tx_ret } => {
+                let _ = tx_ret.try_send(entry.advise_real_data(hwnd, &tr_code, &data));
             }
-            CallerFn::UnadviseRealData { args: (hwnd, tr_code, data), tx_ret, waker } => {
-                ret!(tx_ret, waker, entry.unadvise_real_data(hwnd, &tr_code, &data))
+            CallerFn::UnadviseRealData { args: (hwnd, tr_code, data), tx_ret } => {
+                let _ = tx_ret.try_send(entry.unadvise_real_data(hwnd, &tr_code, &data));
             }
-            CallerFn::UnadviseWindow { args: (hwnd,), tx_ret, waker } => {
-                ret!(tx_ret, waker, entry.unadvise_window(hwnd))
+            CallerFn::UnadviseWindow { args: (hwnd,), tx_ret } => {
+                let _ = tx_ret.try_send(entry.unadvise_window(hwnd));
             }
-            CallerFn::GetAccountList { args: (), tx_ret, waker } => {
-                ret!(tx_ret, waker, entry.get_account_list())
+            CallerFn::GetAccountList { args: (), tx_ret } => {
+                let _ = tx_ret.try_send(entry.get_account_list());
             }
-            CallerFn::GetAccountName { args: (account,), tx_ret, waker } => {
-                ret!(tx_ret, waker, entry.get_account_name(&account))
+            CallerFn::GetAccountName { args: (account,), tx_ret } => {
+                let _ = tx_ret.try_send(entry.get_account_name(&account));
             }
-            CallerFn::GetAccountDetailName { args: (account,), tx_ret, waker } => {
-                ret!(tx_ret, waker, entry.get_account_detail_name(&account))
+            CallerFn::GetAccountDetailName { args: (account,), tx_ret } => {
+                let _ = tx_ret.try_send(entry.get_account_detail_name(&account));
             }
-            CallerFn::GetAccountNickname { args: (account,), tx_ret, waker } => {
-                ret!(tx_ret, waker, entry.get_account_nickname(&account))
+            CallerFn::GetAccountNickname { args: (account,), tx_ret } => {
+                let _ = tx_ret.try_send(entry.get_account_nickname(&account));
             }
-            CallerFn::GetClientIp { args: (), tx_ret, waker } => {
-                ret!(tx_ret, waker, entry.get_client_ip())
+            CallerFn::GetClientIp { args: (), tx_ret } => {
+                let _ = tx_ret.try_send(entry.get_client_ip());
             }
-            CallerFn::GetServerName { args: (), tx_ret, waker } => {
-                ret!(tx_ret, waker, entry.get_server_name())
+            CallerFn::GetServerName { args: (), tx_ret } => {
+                let _ = tx_ret.try_send(entry.get_server_name());
             }
-            CallerFn::GetApiPath { args: (), tx_ret, waker } => {
-                ret!(tx_ret, waker, entry.get_api_path())
+            CallerFn::GetApiPath { args: (), tx_ret } => {
+                let _ = tx_ret.try_send(entry.get_api_path());
             }
-            CallerFn::GetTrCountPerSec { args: (tr_code,), tx_ret, waker } => {
-                ret!(tx_ret, waker, entry.get_tr_count_per_sec(&tr_code))
+            CallerFn::GetTrCountPerSec { args: (tr_code,), tx_ret } => {
+                let _ = tx_ret.try_send(entry.get_tr_count_per_sec(&tr_code));
             }
-            CallerFn::GetTrCountBaseSec { args: (tr_code,), tx_ret, waker } => {
-                ret!(tx_ret, waker, entry.get_tr_count_base_sec(&tr_code))
+            CallerFn::GetTrCountBaseSec { args: (tr_code,), tx_ret } => {
+                let _ = tx_ret.try_send(entry.get_tr_count_base_sec(&tr_code));
             }
-            CallerFn::GetTrCountRequest { args: (tr_code,), tx_ret, waker } => {
-                ret!(tx_ret, waker, entry.get_tr_count_request(&tr_code))
+            CallerFn::GetTrCountRequest { args: (tr_code,), tx_ret } => {
+                let _ = tx_ret.try_send(entry.get_tr_count_request(&tr_code));
             }
-            CallerFn::GetTrCountLimit { args: (tr_code,), tx_ret, waker } => {
-                ret!(tx_ret, waker, entry.get_tr_count_limit(&tr_code))
+            CallerFn::GetTrCountLimit { args: (tr_code,), tx_ret } => {
+                let _ = tx_ret.try_send(entry.get_tr_count_limit(&tr_code));
             }
         }
     }
@@ -463,12 +407,10 @@ mod tests {
     use super::Caller;
     use std::sync::Arc;
 
-    #[tokio::test]
-    async fn test_load_caller() -> Result<(), Box<dyn std::error::Error>> {
-        let caller = Arc::new(Caller::new(None)?);
-        println!("api_path: {:?}", caller.handle().read().await.get_api_path().await);
-        assert!(!caller.handle().read().await.is_connected().await);
-
-        Ok(())
+    #[test]
+    fn test_load_caller() {
+        let caller = Arc::new(Caller::new(None).unwrap());
+        println!("api_path: {:?}", caller.handle().read().unwrap().get_api_path());
+        assert!(!caller.handle().read().unwrap().is_connected());
     }
 }
