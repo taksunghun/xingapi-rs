@@ -13,27 +13,26 @@ struct Opts {
     pw: String,
 }
 
-#[tokio::main]
-async fn main() {
+fn main() {
     let opts = Opts::parse();
-    let xingapi = XingApi::new().await.unwrap();
+    let xingapi = XingApi::new().unwrap();
 
-    xingapi.connect("demo.ebestsec.co.kr", 20001, None, None).await.unwrap();
+    xingapi.connect("demo.ebestsec.co.kr", 20001, None, None).unwrap();
     println!("server connected");
 
-    let login = xingapi.login(&opts.id, &opts.pw, "", false).await.unwrap();
+    let login = xingapi.login(&opts.id, &opts.pw, "", false).unwrap();
     println!("login: {:?}", login);
     assert!(login.is_ok());
 
     println!("accounts:");
-    xingapi.accounts().await.iter().for_each(|acc| println!("{:?}", acc));
+    xingapi.accounts().iter().for_each(|acc| println!("{:?}", acc));
 
-    println!("client_ip: {:?}", xingapi.client_ip().await);
-    println!("server_name: {:?}", xingapi.server_name().await,);
-    println!("api_path: {:?}", xingapi.path().await);
+    println!("client_ip: {:?}", xingapi.client_ip());
+    println!("server_name: {:?}", xingapi.server_name(),);
+    println!("api_path: {:?}", xingapi.path());
 
-    xingapi.disconnect().await;
+    xingapi.disconnect();
     println!("server disconnected");
 
-    assert_eq!(xingapi.is_connected().await, false);
+    assert_eq!(xingapi.is_connected(), false);
 }

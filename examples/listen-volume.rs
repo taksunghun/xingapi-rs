@@ -25,7 +25,7 @@ enum Market {
 }
 
 impl Market {
-    async fn is_listed(&self, xingapi: &XingApi, code: &str) -> bool {
+    fn is_listed(&self, xingapi: &XingApi, code: &str) -> bool {
         let res = xingapi
             .request(
                 &Data {
@@ -43,7 +43,6 @@ impl Market {
                 None,
                 None,
             )
-            .await
             .unwrap();
 
         res.data().unwrap().blocks["t8430OutBlock"]
@@ -65,8 +64,7 @@ struct Opts {
     code: String,
 }
 
-#[tokio::main]
-async fn main() {
+fn main() {
     lazy_static! {
         static ref QUIT: AtomicBool = AtomicBool::new(false);
     }
@@ -77,12 +75,12 @@ async fn main() {
     .unwrap();
 
     let opts = Opts::parse();
-    let xingapi = XingApi::new().await.unwrap();
+    let xingapi = XingApi::new().unwrap();
 
-    xingapi.connect("demo.ebestsec.co.kr", 20001, None, None).await.unwrap();
+    xingapi.connect("demo.ebestsec.co.kr", 20001, None, None).unwrap();
     println!("server connected");
 
-    let login = xingapi.login(&opts.id, &opts.pw, "", false).await.unwrap();
+    let login = xingapi.login(&opts.id, &opts.pw, "", false).unwrap();
     if login.is_ok() {
         println!("login succeed: {}, {}", login.code(), login.message());
     } else {
@@ -92,9 +90,9 @@ async fn main() {
 
     // 종목 코드가 어느 시장에 상장되어 있는지 검색합니다.
     let (tr_code, market) = {
-        if Market::Kospi.is_listed(&xingapi, &opts.code).await {
+        if Market::Kospi.is_listed(&xingapi, &opts.code) {
             ("S3_", "KOSPI")
-        } else if Market::Kosdaq.is_listed(&xingapi, &opts.code).await {
+        } else if Market::Kosdaq.is_listed(&xingapi, &opts.code) {
             ("K3_", "KOSDAQ")
         } else {
             eprintln!("unknown ticker: {}", opts.code);
@@ -102,17 +100,13 @@ async fn main() {
         }
     };
 
-    let real = Arc::new(Real::new(xingapi.clone()).await.unwrap());
+    let real = Arc::new(Real::new(xingapi.clone()).unwrap());
 
-    real.subscribe(tr_code, vec![opts.code.clone()]).await.unwrap();
+    real.subscribe(tr_code, vec![opts.code.clone()]).unwrap();
     println!("registered: tr_code: {}, market: {}, ticker: {}", tr_code, market, opts.code);
 
     while !QUIT.load(Ordering::Relaxed) {
-        let real = real.clone();
-        let recv_timeout =
-            tokio::time::timeout(Duration::from_millis(10), async move { real.recv().await });
-
-        if let Ok(res) = recv_timeout.await {
+        if let Some(res) = real.recv_timeout(Duration::from_millis(10)) {
             let data = res.data().unwrap();
             let cvolume = data.blocks["OutBlock"]["cvolume"].parse::<u32>().unwrap();
             println!("real response: {}", cvolume);
@@ -121,8 +115,8 @@ async fn main() {
 
     println!("ctrl-c interrupt");
 
-    xingapi.disconnect().await;
+    xingapi.disconnect();
     println!("server disconnected");
 
-    assert_eq!(xingapi.is_connected().await, false);
+    assert_eq!(xingapi.is_connected(), false);
 }

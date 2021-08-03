@@ -18,15 +18,14 @@ struct Opts {
     pw: String,
 }
 
-#[tokio::main]
-async fn main() {
+fn main() {
     let opts = Opts::parse();
-    let xingapi = XingApi::new().await.unwrap();
+    let xingapi = XingApi::new().unwrap();
 
-    xingapi.connect("demo.ebestsec.co.kr", 20001, None, None).await.unwrap();
+    xingapi.connect("demo.ebestsec.co.kr", 20001, None, None).unwrap();
     println!("server connected");
 
-    let login = xingapi.login(&opts.id, &opts.pw, "", false).await.unwrap();
+    let login = xingapi.login(&opts.id, &opts.pw, "", false).unwrap();
     println!("login: {:?}", login);
     assert!(login.is_ok());
 
@@ -44,7 +43,6 @@ async fn main() {
             None,
             None,
         )
-        .await
         .unwrap();
 
     let mut stocks: Vec<&str> = res.data().unwrap().blocks["t8430OutBlock"]
@@ -57,8 +55,8 @@ async fn main() {
     stocks.sort();
     println!("{:?}", stocks);
 
-    xingapi.disconnect().await;
+    xingapi.disconnect();
     println!("server disconnected");
 
-    assert_eq!(xingapi.is_connected().await, false);
+    assert_eq!(xingapi.is_connected(), false);
 }

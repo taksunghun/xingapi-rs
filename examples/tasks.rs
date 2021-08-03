@@ -20,31 +20,30 @@ struct Opts {
     pw: String,
 }
 
-#[tokio::main]
-async fn main() {
+fn main() {
     let opts = Opts::parse();
-    let xingapi = XingApi::new().await.unwrap();
+    let xingapi = XingApi::new().unwrap();
 
-    xingapi.connect("demo.ebestsec.co.kr", 20001, None, None).await.unwrap();
+    xingapi.connect("demo.ebestsec.co.kr", 20001, None, None).unwrap();
     println!("server connected");
 
-    let login = xingapi.login(&opts.id, &opts.pw, "", false).await.unwrap();
+    let login = xingapi.login(&opts.id, &opts.pw, "", false).unwrap();
     println!("login: {:?}", login);
     assert!(login.is_ok());
 
-    let t1101_one_sec_limit = xingapi.limit_per_one_sec("t1101").await as u64;
-    let t1101_ten_min_limit = xingapi.limit_per_ten_min("t1101").await as u64;
+    let t1101_one_sec_limit = xingapi.limit_per_one_sec("t1101") as u64;
+    let t1101_ten_min_limit = xingapi.limit_per_ten_min("t1101") as u64;
     println!("t1101 one_sec_limit: {}", t1101_one_sec_limit);
     println!("t1101 ten_min_limit: {}", t1101_ten_min_limit);
 
-    let t1764_one_sec_limit = xingapi.limit_per_one_sec("t1764").await as u64;
-    let t1764_ten_min_limit = xingapi.limit_per_ten_min("t1764").await as u64;
+    let t1764_one_sec_limit = xingapi.limit_per_one_sec("t1764") as u64;
+    let t1764_ten_min_limit = xingapi.limit_per_ten_min("t1764") as u64;
     println!("t1764 one_sec_limit: {}", t1764_one_sec_limit);
     println!("t1764 ten_min_limit: {}", t1764_ten_min_limit);
 
     let xingapi_clone = xingapi.clone();
 
-    let t1101_loop = tokio::spawn(async move {
+    let t1101_loop = std::thread::spawn(move || {
         let xingapi = xingapi_clone;
 
         let data = Data {
@@ -59,13 +58,13 @@ async fn main() {
 
         for i in 0..20 * t1101_one_sec_limit {
             let res = loop {
-                let result = xingapi.request(&data, None, None).await;
+                let result = xingapi.request(&data, None, None);
                 match &result {
                     Ok(_) => {}
                     Err(err) => {
                         if err.kind() == ErrorKind::LimitReached {
                             println!("t1101: limit reached");
-                            tokio::time::sleep(Duration::from_millis(5)).await;
+                            std::thread::sleep(Duration::from_millis(5));
                             continue;
                         }
                     }
@@ -75,21 +74,21 @@ async fn main() {
             }
             .unwrap();
 
-            let elapsed = res.elapsed();
-
             assert!(res.is_ok());
+
+            let elapsed = res.elapsed();
             println!("t1101: index: {}, elapsed: {} ms", i, elapsed.as_millis());
 
             let wait_duration = Duration::from_secs_f32(1.0 / t1101_one_sec_limit as f32);
             if wait_duration > elapsed {
-                tokio::time::sleep(wait_duration - elapsed).await;
+                std::thread::sleep(wait_duration - elapsed);
             }
         }
     });
 
     let xingapi_clone = xingapi.clone();
 
-    let t1764_loop = tokio::spawn(async move {
+    let t1764_loop = std::thread::spawn(move || {
         let xingapi = xingapi_clone;
 
         let data = Data {
@@ -105,13 +104,13 @@ async fn main() {
 
         for i in 0..20 * t1764_one_sec_limit + 1 {
             let res = loop {
-                let result = xingapi.request(&data, None, None).await;
+                let result = xingapi.request(&data, None, None);
                 match &result {
                     Ok(_) => {}
                     Err(err) => {
                         if err.kind() == ErrorKind::LimitReached {
                             println!("t1764: limit reached");
-                            tokio::time::sleep(Duration::from_millis(5)).await;
+                            std::thread::sleep(Duration::from_millis(5));
                             continue;
                         }
                     }
@@ -125,15 +124,15 @@ async fn main() {
             println!("t1764: index: {}, elapsed: {} ms", i, res.elapsed().as_millis());
 
             let wait_duration = Duration::from_secs_f32(1.0 / t1764_one_sec_limit as f32);
-            tokio::time::sleep(wait_duration).await;
+            std::thread::sleep(wait_duration);
         }
     });
 
-    t1101_loop.await.unwrap();
-    t1764_loop.await.unwrap();
+    t1101_loop.join().unwrap();
+    t1764_loop.join().unwrap();
 
-    xingapi.disconnect().await;
+    xingapi.disconnect();
     println!("server disconnected");
 
-    assert_eq!(xingapi.is_connected().await, false);
+    assert_eq!(xingapi.is_connected(), false);
 }
