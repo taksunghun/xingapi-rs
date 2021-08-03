@@ -119,6 +119,19 @@ impl RealWindow {
         )
     }
 
+    pub fn recv_timeout(&self, timeout: Duration) -> Option<RealResponse> {
+        let res = self.rx_res.recv_timeout(timeout).ok()?;
+        Some(RealResponse::new(
+            res.key,
+            res.reg_key,
+            if let Some(layout) = self.tr_layouts.get(&res.tr_code) {
+                data::decode_non_block(layout, &res.data)
+            } else {
+                Err(DecodeError::UnknownLayout)
+            },
+        ))
+    }
+
     pub fn try_recv(&self) -> Option<RealResponse> {
         if let Ok(res) = self.rx_res.try_recv() {
             Some(RealResponse::new(

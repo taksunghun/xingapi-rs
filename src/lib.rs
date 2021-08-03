@@ -337,6 +337,17 @@ impl Real {
         self.0.recv()
     }
 
+    /// 지정된 시간 동안 서버로부터 수신받은 실시간 TR을 큐에서 가져올 때까지 기다립니다.
+    ///
+    /// 시간 초과가 발생하는 경우 `None`을 반환합니다.
+    pub fn recv_timeout(&self, timeout: Duration) -> Option<RealResponse> {
+        #[cfg(not(windows))]
+        unimplemented!();
+
+        #[cfg(windows)]
+        self.0.recv_timeout(timeout)
+    }
+
     /// 서버로부터 수신받은 실시간 TR이 있는 경우 실시간 TR을 반환하고,
     /// 그렇지 않은 경우 `None`을 반환합니다.
     pub fn try_recv(&self) -> Option<RealResponse> {

@@ -149,6 +149,10 @@ impl Real {
         self.window.recv()
     }
 
+    pub fn recv_timeout(&self, timeout: Duration) -> Option<RealResponse> {
+        self.window.recv_timeout(timeout)
+    }
+
     pub fn try_recv(&self) -> Option<RealResponse> {
         self.window.try_recv()
     }
