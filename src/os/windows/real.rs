@@ -12,10 +12,12 @@ use crate::{
     response::RealResponse,
 };
 
+use crossbeam_channel::{Receiver, Sender};
 use lazy_static::lazy_static;
 use std::{
     collections::HashMap,
     sync::{atomic::AtomicPtr, Arc},
+    time::Duration,
 };
 use xingapi_res::TrLayout;
 
@@ -55,11 +57,11 @@ struct IncompleteResponse {
 }
 
 struct WindowData {
-    tx_res: async_channel::Sender<IncompleteResponse>,
+    tx_res: Sender<IncompleteResponse>,
 }
 
 impl WindowData {
-    fn new(window: &Window, tx_res: async_channel::Sender<IncompleteResponse>) -> AtomicPtr<Self> {
+    fn new(window: &Window, tx_res: Sender<IncompleteResponse>) -> AtomicPtr<Self> {
         let mut data = AtomicPtr::new(Box::into_raw(Box::new(WindowData { tx_res })));
         unsafe {
             SetWindowLongPtrA(**window as _, GWLP_USERDATA, *data.get_mut() as _);
@@ -74,38 +76,38 @@ pub struct RealWindow {
     tr_layouts: Arc<HashMap<String, TrLayout>>,
     window: Window,
     _window_data: AtomicPtr<WindowData>,
-    rx_res: async_channel::Receiver<IncompleteResponse>,
+    rx_res: Receiver<IncompleteResponse>,
 }
 
 impl RealWindow {
-    pub async fn new(
+    pub fn new(
         caller: Arc<Caller>,
         tr_layouts: Arc<HashMap<String, TrLayout>>,
     ) -> Result<Self, Win32Error> {
-        let window = Window::new(caller.clone(), &REAL_WNDCLASS).await?;
+        let window = Window::new(caller.clone(), &REAL_WNDCLASS)?;
 
-        let (tx_res, rx_res) = async_channel::unbounded();
+        let (tx_res, rx_res) = crossbeam_channel::unbounded();
         let _window_data = WindowData::new(&window, tx_res);
 
         Ok(Self { caller, tr_layouts, window, _window_data, rx_res })
     }
 
-    pub async fn subscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), ()> {
-        let handle = self.caller.handle().read().await;
-        handle.advise_real_data(*self.window, tr_code, data).await
+    pub fn subscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), ()> {
+        let handle = self.caller.handle().read().unwrap();
+        handle.advise_real_data(*self.window, tr_code, data)
     }
 
-    pub async fn unsubscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), ()> {
-        let handle = self.caller.handle().read().await;
-        handle.unadvise_real_data(*self.window, tr_code, data).await
+    pub fn unsubscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), ()> {
+        let handle = self.caller.handle().read().unwrap();
+        handle.unadvise_real_data(*self.window, tr_code, data)
     }
 
-    pub async fn unsubscribe_all(&self) -> Result<(), ()> {
-        self.caller.unadvise_window(*self.window).await
+    pub fn unsubscribe_all(&self) -> Result<(), ()> {
+        self.caller.unadvise_window(*self.window)
     }
 
-    pub async fn recv(&self) -> RealResponse {
-        let res = self.rx_res.recv().await.unwrap();
+    pub fn recv(&self) -> RealResponse {
+        let res = self.rx_res.recv().unwrap();
         RealResponse::new(
             res.key,
             res.reg_key,
@@ -157,7 +159,7 @@ impl RealWindow {
                 };
 
                 let packet = &*(lparam as *const RECV_REAL_PACKET);
-                let _ = window_data.tx_res.try_send(IncompleteResponse {
+                let _ = window_data.tx_res.send(IncompleteResponse {
                     tr_code: euckr::decode(&packet.tr_code).to_string(),
                     key: euckr::decode(&packet.key).to_string(),
                     reg_key: euckr::decode(&packet.reg_key).to_string(),
@@ -173,6 +175,6 @@ impl RealWindow {
 
 impl Drop for RealWindow {
     fn drop(&mut self) {
-        self.caller.unadvise_window(*self.window);
+        let _ = self.caller.unadvise_window(*self.window);
     }
 }

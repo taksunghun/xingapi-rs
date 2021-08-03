@@ -10,8 +10,6 @@ use crate::{
     response::LoginResponse,
 };
 
-use async_channel::Sender;
-use async_lock::RwLock;
 use encoding_rs::EUC_KR;
 use lazy_static::lazy_static;
 use std::{
@@ -19,7 +17,8 @@ use std::{
     panic::{RefUnwindSafe, UnwindSafe},
     sync::{
         atomic::{AtomicPtr, Ordering},
-        Arc,
+        mpsc::{self, SyncSender},
+        Arc, RwLock,
     },
 };
 
@@ -52,7 +51,7 @@ lazy_static! {
 }
 
 struct WindowData {
-    tx_res: Option<Sender<Option<LoginResponse>>>,
+    tx_res: Option<SyncSender<Option<LoginResponse>>>,
 }
 
 impl WindowData {
@@ -78,41 +77,41 @@ pub struct SessionWindow {
 }
 
 impl SessionWindow {
-    pub(crate) async fn new(caller: Arc<Caller>) -> Result<Self, Win32Error> {
-        let window = Window::new(caller.clone(), &SESSION_WNDCLASS).await?;
+    pub(crate) fn new(caller: Arc<Caller>) -> Result<Self, Win32Error> {
+        let window = Window::new(caller.clone(), &SESSION_WNDCLASS)?;
         let window_data = WindowData::new(&window);
 
         Ok(Self { caller, window, window_data })
     }
 
-    pub async fn connect(
+    pub fn connect(
         &self,
         addr: &str,
         port: u16,
         timeout: Option<i32>,
         max_packet_size: Option<i32>,
     ) -> Result<(), Error> {
-        let handle = self.caller.handle().write().await;
-        handle.connect(*self.window, addr, port, timeout, max_packet_size).await
+        let handle = self.caller.handle().write().unwrap();
+        handle.connect(*self.window, addr, port, timeout, max_packet_size)
     }
 
-    pub async fn login(
+    pub fn login(
         &self,
         id: &str,
         pw: &str,
         cert_pw: &str,
         cert_err_dialog: bool,
     ) -> Result<LoginResponse, Error> {
-        let handle = self.caller.handle().write().await;
+        let handle = self.caller.handle().write().unwrap();
         let window_data = unsafe { &mut *self.window_data.load(Ordering::Relaxed) };
 
-        let (tx_res, rx_res) = async_channel::unbounded();
-        *window_data.write().await = WindowData { tx_res: Some(tx_res) };
+        let (tx_res, rx_res) = mpsc::sync_channel(1);
+        *window_data.write().unwrap() = WindowData { tx_res: Some(tx_res) };
 
-        handle.login(*self.window, id, pw, cert_pw, cert_err_dialog).await?;
-        let result = rx_res.recv().await.unwrap();
+        handle.login(*self.window, id, pw, cert_pw, cert_err_dialog)?;
+        let result = rx_res.recv().unwrap();
 
-        *window_data.write().await = WindowData::empty();
+        *window_data.write().unwrap() = WindowData::empty();
 
         if let Some(res) = result {
             Ok(res)
@@ -147,17 +146,10 @@ impl SessionWindow {
 
     #[inline(always)]
     fn on_recv_msg(hwnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) {
-        let window_data_lock = unsafe {
+        let window_data = unsafe {
             let ptr = GetWindowLongPtrA(hwnd, GWLP_USERDATA) as *const RwLock<WindowData>;
             assert_ne!(ptr, std::ptr::null());
-            &*ptr
-        };
-
-        let window_data = loop {
-            if let Some(data) = window_data_lock.try_read() {
-                break data;
-            }
-            std::hint::spin_loop();
+            (*ptr).read().unwrap()
         };
 
         match msg {

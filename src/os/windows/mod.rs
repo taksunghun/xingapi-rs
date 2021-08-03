@@ -17,7 +17,7 @@ use crate::{
     Account,
 };
 
-use std::{collections::HashMap, path::Path, sync::Arc};
+use std::{collections::HashMap, path::Path, sync::Arc, time::Duration};
 use xingapi_res::TrLayout;
 
 pub struct XingApi {
@@ -28,7 +28,7 @@ pub struct XingApi {
 }
 
 impl XingApi {
-    pub async fn new(
+    pub fn new(
         path: Option<&Path>,
         layout_tbl: HashMap<String, TrLayout>,
     ) -> Result<Arc<Self>, Error> {
@@ -36,58 +36,58 @@ impl XingApi {
 
         let caller = Arc::new(Caller::new(path)?);
         let layout_tbl = Arc::new(layout_tbl);
-        let session_window = SessionWindow::new(caller.clone()).await?;
-        let query_window = QueryWindow::new(caller.clone(), layout_tbl.clone()).await?;
+        let session_window = SessionWindow::new(caller.clone())?;
+        let query_window = QueryWindow::new(caller.clone(), layout_tbl.clone())?;
 
         Ok(Arc::new(XingApi { caller, layout_tbl, session_window, query_window }))
     }
 
-    pub async fn connect(
+    pub fn connect(
         &self,
         addr: &str,
         port: u16,
         timeout: Option<i32>,
         max_packet_size: Option<i32>,
     ) -> Result<(), Error> {
-        self.session_window.connect(addr, port, timeout, max_packet_size).await
+        self.session_window.connect(addr, port, timeout, max_packet_size)
     }
 
-    pub async fn is_connected(&self) -> bool {
-        self.caller.handle().read().await.is_connected().await
+    pub fn is_connected(&self) -> bool {
+        self.caller.handle().read().unwrap().is_connected()
     }
 
-    pub async fn disconnect(&self) {
-        self.caller.handle().write().await.disconnect().await
+    pub fn disconnect(&self) {
+        self.caller.handle().write().unwrap().disconnect()
     }
 
-    pub async fn login(
+    pub fn login(
         &self,
         id: &str,
         pw: &str,
         cert_pw: &str,
         cert_err_dialog: bool,
     ) -> Result<LoginResponse, Error> {
-        self.session_window.login(id, pw, cert_pw, cert_err_dialog).await
+        self.session_window.login(id, pw, cert_pw, cert_err_dialog)
     }
 
-    pub async fn request(
+    pub fn request(
         &self,
         data: &Data,
         continue_key: Option<&str>,
         timeout: Option<i32>,
     ) -> Result<QueryResponse, Error> {
-        self.query_window.request(data, continue_key, timeout).await
+        self.query_window.request(data, continue_key, timeout)
     }
 
-    pub async fn accounts(&self) -> Vec<Account> {
-        let handle = self.caller.handle().read().await;
-        let codes = handle.get_account_list().await;
+    pub fn accounts(&self) -> Vec<Account> {
+        let handle = self.caller.handle().read().unwrap();
+        let codes = handle.get_account_list();
 
         let mut accounts = Vec::with_capacity(codes.len());
         for code in codes {
-            let name = handle.get_account_name(&code).await;
-            let detail_name = handle.get_account_detail_name(&code).await;
-            let nickname = handle.get_account_nickname(&code).await;
+            let name = handle.get_account_name(&code);
+            let detail_name = handle.get_account_detail_name(&code);
+            let nickname = handle.get_account_nickname(&code);
 
             accounts.push(Account { code, name, detail_name, nickname });
         }
@@ -95,32 +95,32 @@ impl XingApi {
         accounts
     }
 
-    pub async fn client_ip(&self) -> String {
-        self.caller.handle().read().await.get_client_ip().await
+    pub fn client_ip(&self) -> String {
+        self.caller.handle().read().unwrap().get_client_ip()
     }
 
-    pub async fn server_name(&self) -> String {
-        self.caller.handle().read().await.get_server_name().await
+    pub fn server_name(&self) -> String {
+        self.caller.handle().read().unwrap().get_server_name()
     }
 
-    pub async fn path(&self) -> String {
-        self.caller.handle().read().await.get_api_path().await
+    pub fn path(&self) -> String {
+        self.caller.handle().read().unwrap().get_api_path()
     }
 
-    pub async fn limit_per_one_sec(&self, tr_code: &str) -> i32 {
-        self.caller.handle().read().await.get_tr_count_per_sec(tr_code).await
+    pub fn limit_per_one_sec(&self, tr_code: &str) -> i32 {
+        self.caller.handle().read().unwrap().get_tr_count_per_sec(tr_code)
     }
 
-    pub async fn limit_sec_per_once(&self, tr_code: &str) -> i32 {
-        self.caller.handle().read().await.get_tr_count_base_sec(tr_code).await
+    pub fn limit_sec_per_once(&self, tr_code: &str) -> i32 {
+        self.caller.handle().read().unwrap().get_tr_count_base_sec(tr_code)
     }
 
-    pub async fn count_in_ten_min(&self, tr_code: &str) -> i32 {
-        self.caller.handle().read().await.get_tr_count_request(tr_code).await
+    pub fn count_in_ten_min(&self, tr_code: &str) -> i32 {
+        self.caller.handle().read().unwrap().get_tr_count_request(tr_code)
     }
 
-    pub async fn limit_per_ten_min(&self, tr_code: &str) -> i32 {
-        self.caller.handle().read().await.get_tr_count_limit(tr_code).await
+    pub fn limit_per_ten_min(&self, tr_code: &str) -> i32 {
+        self.caller.handle().read().unwrap().get_tr_count_limit(tr_code)
     }
 }
 
@@ -129,26 +129,24 @@ pub struct Real {
 }
 
 impl Real {
-    pub async fn new(xingapi: Arc<XingApi>) -> Result<Self, Error> {
-        Ok(Self {
-            window: RealWindow::new(xingapi.caller.clone(), xingapi.layout_tbl.clone()).await?,
-        })
+    pub fn new(xingapi: Arc<XingApi>) -> Result<Self, Error> {
+        Ok(Self { window: RealWindow::new(xingapi.caller.clone(), xingapi.layout_tbl.clone())? })
     }
 
-    pub async fn subscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), ()> {
-        self.window.subscribe(tr_code, data).await
+    pub fn subscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), ()> {
+        self.window.subscribe(tr_code, data)
     }
 
-    pub async fn unsubscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), ()> {
-        self.window.unsubscribe(tr_code, data).await
+    pub fn unsubscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), ()> {
+        self.window.unsubscribe(tr_code, data)
     }
 
-    pub async fn unsubscribe_all(&self) -> Result<(), ()> {
-        self.window.unsubscribe_all().await
+    pub fn unsubscribe_all(&self) -> Result<(), ()> {
+        self.window.unsubscribe_all()
     }
 
-    pub async fn recv(&self) -> RealResponse {
-        self.window.recv().await
+    pub fn recv(&self) -> RealResponse {
+        self.window.recv()
     }
 
     pub fn try_recv(&self) -> Option<RealResponse> {

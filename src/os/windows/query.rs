@@ -23,7 +23,8 @@ use std::{
     panic::{RefUnwindSafe, UnwindSafe},
     sync::{
         atomic::{AtomicPtr, Ordering},
-        Arc, Weak,
+        mpsc::{self, SyncSender},
+        Arc, Mutex, Weak,
     },
 };
 
@@ -55,7 +56,7 @@ lazy_static! {
     };
 }
 
-type TxResponse = async_channel::Sender<Option<IncompleteResponse>>;
+type TxResponse = SyncSender<Option<IncompleteResponse>>;
 
 struct IncompleteResponse {
     code: String,
@@ -80,8 +81,8 @@ impl IncompleteResponse {
 struct WindowData {
     caller: Weak<Caller>,
     tr_layouts: Weak<HashMap<String, TrLayout>>,
-    res_map: [Option<IncompleteResponse>; 256],
-    tx_res_map: [async_lock::Mutex<Option<TxResponse>>; 256],
+    res_tbl: [Option<IncompleteResponse>; 256],
+    tx_res_tbl: [Mutex<Option<TxResponse>>; 256],
 }
 
 impl WindowData {
@@ -93,8 +94,8 @@ impl WindowData {
         let mut data = AtomicPtr::new(Box::into_raw(Box::new(WindowData {
             caller: Arc::downgrade(&caller),
             tr_layouts: Arc::downgrade(&tr_layouts),
-            res_map: array_init(|_| None),
-            tx_res_map: array_init(|_| async_lock::Mutex::new(None)),
+            res_tbl: array_init(|_| None),
+            tx_res_tbl: array_init(|_| Mutex::new(None)),
         })));
 
         unsafe {
@@ -113,47 +114,43 @@ pub struct QueryWindow {
 }
 
 impl QueryWindow {
-    fn tx_res(&self, req_id: i32) -> &async_lock::Mutex<Option<TxResponse>> {
-        &unsafe { &*self.window_data.load(Ordering::Relaxed) }.tx_res_map[req_id as usize]
-    }
-
-    pub(crate) async fn new(
+    pub(crate) fn new(
         caller: Arc<Caller>,
         tr_layouts: Arc<HashMap<String, TrLayout>>,
     ) -> Result<Self, Win32Error> {
-        let window = Window::new(caller.clone(), &QUERY_WNDCLASS).await?;
+        let window = Window::new(caller.clone(), &QUERY_WNDCLASS)?;
         let window_data = WindowData::new(&window, &caller, &tr_layouts);
 
         Ok(Self { caller, tr_layouts, window, window_data })
     }
 
-    pub async fn request(
+    pub fn request(
         &self,
         data: &Data,
         continue_key: Option<&str>,
         timeout: Option<i32>,
     ) -> Result<QueryResponse, Error> {
-        let handle = self.caller.handle().read().await;
+        let handle = self.caller.handle().read().unwrap();
         let tr_code = &data.code;
-        let req_id = handle
-            .request(
-                *self.window,
-                tr_code,
-                data::encode(&self.tr_layouts, &data)?,
-                continue_key,
-                timeout,
-            )
-            .await?;
+        let req_id = handle.request(
+            *self.window,
+            tr_code,
+            data::encode(&self.tr_layouts, &data)?,
+            continue_key,
+            timeout,
+        )?;
 
-        let (tx_res, rx_res) = async_channel::bounded(1);
+        let (tx_res, rx_res) = mpsc::sync_channel(1);
 
         {
-            let mut tx_res_ref = self.tx_res(req_id).lock().await;
+            let window_data = unsafe { &mut *self.window_data.load(Ordering::Relaxed) };
+
+            let mut tx_res_ref = window_data.tx_res_tbl[req_id as usize].lock().unwrap();
             assert!(tx_res_ref.is_none());
             *tx_res_ref.deref_mut() = Some(tx_res);
         }
 
-        if let Some(res) = rx_res.recv().await.unwrap() {
+        if let Some(res) = rx_res.recv().unwrap() {
             Ok(QueryResponse::new(
                 &res.code,
                 &res.message,
@@ -198,24 +195,11 @@ impl QueryWindow {
             &mut *ptr
         };
 
-        macro_rules! take_tx_res {
-            ($req_id:ident) => {
-                loop {
-                    if let Some(mut tx) = window_data.tx_res_map[$req_id as usize].try_lock() {
-                        if tx.is_some() {
-                            break tx.take().unwrap();
-                        }
-                    }
-                    std::hint::spin_loop();
-                }
-            };
-        }
-
         // req = request, res = response
         match msg {
             XM_RECEIVE_DATA => {
                 let caller = unsafe { &*window_data.caller.as_ptr() };
-                let layout_map = unsafe { &*window_data.tr_layouts.as_ptr() };
+                let layout_tbl = unsafe { &*window_data.tr_layouts.as_ptr() };
 
                 let req_id = match wparam {
                     1 => unsafe { &*(lparam as *const RECV_PACKET) }.req_id,
@@ -224,8 +208,8 @@ impl QueryWindow {
                     _ => unreachable!(),
                 };
 
-                if window_data.res_map[req_id as usize].is_none() {
-                    window_data.res_map[req_id as usize] = Some(IncompleteResponse::empty());
+                if window_data.res_tbl[req_id as usize].is_none() {
+                    window_data.res_tbl[req_id as usize] = Some(IncompleteResponse::empty());
                 }
 
                 // RECV_PACKET보다 MSG_PACKET이 먼저 오는 경우도 있습니다.
@@ -235,7 +219,7 @@ impl QueryWindow {
                         let tr_code = euckr::decode(&recv_packet.tr_code);
                         let continue_key = euckr::decode(&recv_packet.continue_key);
 
-                        let res = window_data.res_map[req_id as usize].as_mut().unwrap();
+                        let res = window_data.res_tbl[req_id as usize].as_mut().unwrap();
 
                         if res.elapsed_time < recv_packet.elapsed_time {
                             res.elapsed_time = recv_packet.elapsed_time;
@@ -250,7 +234,7 @@ impl QueryWindow {
                                 .to_owned()
                         };
 
-                        if let Some(tr_layout) = layout_map.get(tr_code.as_ref()) {
+                        if let Some(tr_layout) = layout_tbl.get(tr_code.as_ref()) {
                             if tr_layout.block {
                                 let block_name = euckr::decode(&recv_packet.block_name).to_string();
 
@@ -269,7 +253,7 @@ impl QueryWindow {
                     2 => {
                         let msg_packet = unsafe { &*(lparam as *const MSG_PACKET) };
 
-                        let res = window_data.res_map[req_id as usize].as_mut().unwrap();
+                        let res = window_data.res_tbl[req_id as usize].as_mut().unwrap();
                         res.code = euckr::decode(&msg_packet.msg_code).to_string();
                         res.message = euckr::decode(unsafe {
                             std::slice::from_raw_parts(
@@ -285,8 +269,13 @@ impl QueryWindow {
                         caller.entry().release_message_data(lparam);
                     }
                     4 => {
-                        let res = window_data.res_map[req_id as usize].take().unwrap();
-                        let _ = take_tx_res!(req_id).try_send(Some(res));
+                        let res = window_data.res_tbl[req_id as usize].take().unwrap();
+                        let _ = window_data.tx_res_tbl[req_id as usize]
+                            .lock()
+                            .unwrap()
+                            .as_ref()
+                            .unwrap()
+                            .send(Some(res));
 
                         caller.entry().release_request_data(req_id);
                     }
@@ -296,8 +285,13 @@ impl QueryWindow {
             XM_TIMEOUT => {
                 let req_id = lparam as i32;
 
-                window_data.res_map[req_id as usize] = None;
-                let _ = take_tx_res!(req_id).try_send(None);
+                window_data.res_tbl[req_id as usize] = None;
+                let _ = window_data.tx_res_tbl[req_id as usize]
+                    .lock()
+                    .unwrap()
+                    .as_ref()
+                    .unwrap()
+                    .send(None);
             }
             _ => unreachable!(),
         }
