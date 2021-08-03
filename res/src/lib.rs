@@ -38,23 +38,22 @@ pub fn load_from_path<P: AsRef<Path>>(path: P) -> Result<HashMap<String, TrLayou
                 return Err(LoadError::Decode(file_path));
             }
 
-            let res = data.parse::<TrLayout>().map_err(|err| LoadError::Parse(file_path, err))?;
-            Ok(res)
+            Ok(data.parse().map_err(|err| LoadError::Parse(file_path, err))?)
         }));
     }
 
-    let mut res_map: HashMap<String, TrLayout> = HashMap::new();
+    let mut res_tbl: HashMap<String, TrLayout> = HashMap::new();
     for task in tasks {
         let res = task.join().unwrap()?;
 
-        if let Some(other_res) = res_map.get(&res.code) {
+        if let Some(other_res) = res_tbl.get(&res.code) {
             if res != *other_res {
                 return Err(LoadError::Confilict(res.code.to_owned()));
             }
         } else {
-            res_map.insert(res.code.to_owned(), res);
+            res_tbl.insert(res.code.to_owned(), res);
         }
     }
 
-    Ok(res_map)
+    Ok(res_tbl)
 }
