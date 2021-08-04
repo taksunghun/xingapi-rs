@@ -221,7 +221,7 @@ impl Entry {
         addr: &str,
         port: u16,
         timeout: Option<i32>,
-        max_packet_size: Option<i32>,
+        packet_len_limit: Option<i32>,
     ) -> Result<(), Error> {
         unsafe {
             if (self.connect)(
@@ -235,7 +235,7 @@ impl Entry {
                 } else {
                     -1
                 },
-                if let Some(s) = max_packet_size {
+                if let Some(s) = packet_len_limit {
                     assert!(s > 0);
                     s
                 } else {

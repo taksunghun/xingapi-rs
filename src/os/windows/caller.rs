@@ -92,9 +92,9 @@ impl CallerHandle {
         addr: &str,
         port: u16,
         timeout: Option<i32>,
-        max_packet_size: Option<i32>,
+        packet_len_limit: Option<i32>,
     ) -> Result<(), Error> {
-        call!(self, Connect(hwnd, addr, port, timeout, max_packet_size))
+        call!(self, Connect(hwnd, addr, port, timeout, packet_len_limit))
     }
 
     pub fn is_connected(&self) -> bool {

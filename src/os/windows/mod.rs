@@ -47,9 +47,9 @@ impl XingApi {
         addr: &str,
         port: u16,
         timeout: Option<i32>,
-        max_packet_size: Option<i32>,
+        packet_len_limit: Option<i32>,
     ) -> Result<(), Error> {
-        self.session_window.connect(addr, port, timeout, max_packet_size)
+        self.session_window.connect(addr, port, timeout, packet_len_limit)
     }
 
     pub fn is_connected(&self) -> bool {

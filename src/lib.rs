@@ -137,13 +137,13 @@ impl XingApi {
         addr: &str,
         port: u16,
         timeout: Option<i32>,
-        max_packet_size: Option<i32>,
+        packet_len_limit: Option<i32>,
     ) -> Result<(), Error> {
         #[cfg(not(windows))]
         unimplemented!();
 
         #[cfg(windows)]
-        self.0.connect(addr, port, timeout, max_packet_size)
+        self.0.connect(addr, port, timeout, packet_len_limit)
     }
 
     /// 서버 연결 여부를 반환합니다
