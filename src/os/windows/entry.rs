@@ -11,11 +11,10 @@ use crate::{
     os::windows::raw::XM_OFFSET,
 };
 
-use lazy_static::lazy_static;
 use libloading::os::windows::{Library, Symbol};
-use std::{path::Path, sync::Mutex};
+use std::path::Path;
 
-use winapi::ctypes::{c_int, c_void};
+use winapi::ctypes::c_int;
 use winapi::shared::minwindef::{BOOL, FALSE, LPARAM, TRUE};
 use winapi::shared::windef::HWND;
 
@@ -27,15 +26,8 @@ type Login = unsafe extern "system" fn(HWND, *const u8, *const u8, *const u8, c_
 type Logout = unsafe extern "system" fn(HWND) -> BOOL;
 
 // 조회TR
-type Request = unsafe extern "system" fn(
-    HWND,
-    *const u8,
-    *const c_void,
-    c_int,
-    BOOL,
-    *const u8,
-    c_int,
-) -> c_int;
+type Request =
+    unsafe extern "system" fn(HWND, *const u8, *const u8, c_int, BOOL, *const u8, c_int) -> c_int;
 type ReleaseRequestData = unsafe extern "system" fn(c_int);
 type ReleaseMessageData = unsafe extern "system" fn(LPARAM);
 
@@ -130,27 +122,19 @@ pub struct Entry {
 #[allow(dead_code)]
 impl Entry {
     fn load_lib(path: &Path) -> Result<Library, EntryError> {
-        lazy_static! {
-            static ref LOAD_LIB_LOCK: Mutex<()> = Mutex::new(());
-        }
-
-        let _lock_guard = LOAD_LIB_LOCK.lock().unwrap();
-
         if Library::open_already_loaded(path).is_ok() {
             return Err(EntryError::LibraryInUse);
         }
 
-        unsafe { Library::new(path) }.map_err(|error| {
-            let path = path.to_string_lossy().into();
-            EntryError::Library { path, error }
-        })
+        unsafe { Library::new(path) }
+            .map_err(|error| EntryError::Library { path: path.to_string_lossy().into(), error })
     }
 
     fn load_entry(lib: Library, path: &Path) -> Result<Self, EntryError> {
         macro_rules! load_sym {
             ($sym_name:literal) => {
-                unsafe { lib.get($sym_name) }.map_err(|error| EntryError::Symbol {
-                    symbol: std::str::from_utf8($sym_name).unwrap().to_owned(),
+                unsafe { lib.get($sym_name.as_bytes()) }.map_err(|error| EntryError::Symbol {
+                    symbol: $sym_name.to_owned(),
                     path: path.to_string_lossy().into(),
                     error,
                 })
@@ -159,50 +143,50 @@ impl Entry {
 
         Ok(Self {
             _disable_send_sync: std::ptr::null(),
-            connect: load_sym!(b"ETK_Connect")?,
-            is_connected: load_sym!(b"ETK_IsConnected")?,
-            disconnect: load_sym!(b"ETK_Disconnect")?,
-            login: load_sym!(b"ETK_Login")?,
-            logout: load_sym!(b"ETK_Logout")?,
-            request: load_sym!(b"ETK_Request")?,
-            release_request_data: load_sym!(b"ETK_ReleaseRequestData")?,
-            release_message_data: load_sym!(b"ETK_ReleaseMessageData")?,
-            advise_real_data: load_sym!(b"ETK_AdviseRealData")?,
-            unadvise_real_data: load_sym!(b"ETK_UnadviseRealData")?,
-            unadvise_window: load_sym!(b"ETK_UnadviseWindow")?,
-            get_acc_list_count: load_sym!(b"ETK_GetAccountListCount")?,
-            get_acc_list: load_sym!(b"ETK_GetAccountList")?,
-            get_acc_name: load_sym!(b"ETK_GetAccountName")?,
-            get_acc_detail_name: load_sym!(b"ETK_GetAcctDetailName")?,
-            get_acc_nickname: load_sym!(b"ETK_GetAcctNickname")?,
-            get_last_error: load_sym!(b"ETK_GetLastError")?,
-            get_error_message: load_sym!(b"ETK_GetErrorMessage")?,
-            get_client_ip: load_sym!(b"ETK_GetClientIP")?,
-            get_server_name: load_sym!(b"ETK_GetServerName")?,
-            get_api_path: load_sym!(b"ETK_GetAPIPath")?,
-            get_tr_count_per_sec: load_sym!(b"ETK_GetTRCountPerSec")?,
-            get_tr_count_base_sec: load_sym!(b"ETK_GetTRCountBaseSec")?,
-            get_tr_count_request: load_sym!(b"ETK_GetTRCountRequest")?,
-            get_tr_count_limit: load_sym!(b"ETK_GetTRCountLimit")?,
-            request_service: load_sym!(b"ETK_RequestService")?,
-            remove_service: load_sym!(b"ETK_RemoveService")?,
-            request_link_to_hts: load_sym!(b"ETK_RequestLinkToHTS")?,
-            advise_link_from_hts: load_sym!(b"ETK_AdviseLinkFromHTS")?,
-            unadvise_link_from_hts: load_sym!(b"ETK_UnAdviseLinkFromHTS")?,
-            decompress: load_sym!(b"ETK_Decompress")?,
+            connect: load_sym!("ETK_Connect")?,
+            is_connected: load_sym!("ETK_IsConnected")?,
+            disconnect: load_sym!("ETK_Disconnect")?,
+            login: load_sym!("ETK_Login")?,
+            logout: load_sym!("ETK_Logout")?,
+            request: load_sym!("ETK_Request")?,
+            release_request_data: load_sym!("ETK_ReleaseRequestData")?,
+            release_message_data: load_sym!("ETK_ReleaseMessageData")?,
+            advise_real_data: load_sym!("ETK_AdviseRealData")?,
+            unadvise_real_data: load_sym!("ETK_UnadviseRealData")?,
+            unadvise_window: load_sym!("ETK_UnadviseWindow")?,
+            get_acc_list_count: load_sym!("ETK_GetAccountListCount")?,
+            get_acc_list: load_sym!("ETK_GetAccountList")?,
+            get_acc_name: load_sym!("ETK_GetAccountName")?,
+            get_acc_detail_name: load_sym!("ETK_GetAcctDetailName")?,
+            get_acc_nickname: load_sym!("ETK_GetAcctNickname")?,
+            get_last_error: load_sym!("ETK_GetLastError")?,
+            get_error_message: load_sym!("ETK_GetErrorMessage")?,
+            get_client_ip: load_sym!("ETK_GetClientIP")?,
+            get_server_name: load_sym!("ETK_GetServerName")?,
+            get_api_path: load_sym!("ETK_GetAPIPath")?,
+            get_tr_count_per_sec: load_sym!("ETK_GetTRCountPerSec")?,
+            get_tr_count_base_sec: load_sym!("ETK_GetTRCountBaseSec")?,
+            get_tr_count_request: load_sym!("ETK_GetTRCountRequest")?,
+            get_tr_count_limit: load_sym!("ETK_GetTRCountLimit")?,
+            request_service: load_sym!("ETK_RequestService")?,
+            remove_service: load_sym!("ETK_RemoveService")?,
+            request_link_to_hts: load_sym!("ETK_RequestLinkToHTS")?,
+            advise_link_from_hts: load_sym!("ETK_AdviseLinkFromHTS")?,
+            unadvise_link_from_hts: load_sym!("ETK_UnAdviseLinkFromHTS")?,
+            decompress: load_sym!("ETK_Decompress")?,
             lib,
         })
     }
 
     pub fn new() -> Result<Self, EntryError> {
-        let sdk_dl = Path::new("C:/eBEST/xingAPI/xingAPI.dll");
-        let dl = Path::new("xingAPI.dll");
+        let sdk_lib_path = Path::new("C:/eBEST/xingAPI/xingAPI.dll");
+        let lib_name = Path::new("xingAPI.dll");
 
-        match Self::load_lib(sdk_dl) {
-            Ok(lib) => Self::load_entry(lib, sdk_dl),
+        match Self::load_lib(sdk_lib_path) {
+            Ok(lib) => Self::load_entry(lib, sdk_lib_path),
             Err(err) => {
-                if let Ok(lib) = Self::load_lib(dl) {
-                    Self::load_entry(lib, dl)
+                if let Ok(lib) = Self::load_lib(lib_name) {
+                    Self::load_entry(lib, lib_name)
                 } else {
                     Err(err)
                 }
@@ -211,8 +195,7 @@ impl Entry {
     }
 
     pub fn new_with_path<P: AsRef<Path>>(path: P) -> Result<Self, EntryError> {
-        let path = path.as_ref();
-        Self::load_entry(Self::load_lib(path)?, path)
+        Self::load_entry(Self::load_lib(path.as_ref())?, path.as_ref())
     }
 
     pub fn connect(
@@ -457,7 +440,7 @@ impl Entry {
     }
 
     pub fn get_api_path(&self) -> String {
-        let mut buffer = [0; 261];
+        let mut buffer = [0; 260];
         unsafe {
             (self.get_api_path)(buffer.as_mut_ptr());
         }
@@ -484,12 +467,15 @@ impl Entry {
     pub fn get_tr_count_per_sec(&self, tr_code: &str) -> i32 {
         unsafe { (self.get_tr_count_per_sec)(euckr::encode(tr_code).as_ptr()) }
     }
+
     pub fn get_tr_count_base_sec(&self, tr_code: &str) -> i32 {
         unsafe { (self.get_tr_count_base_sec)(euckr::encode(tr_code).as_ptr()) }
     }
+
     pub fn get_tr_count_request(&self, tr_code: &str) -> i32 {
         unsafe { (self.get_tr_count_request)(euckr::encode(tr_code).as_ptr()) }
     }
+
     pub fn get_tr_count_limit(&self, tr_code: &str) -> i32 {
         unsafe { (self.get_tr_count_limit)(euckr::encode(tr_code).as_ptr()) }
     }
@@ -500,12 +486,10 @@ mod tests {
     use super::{Entry, EntryError};
 
     #[test]
-    fn test_load_entry() -> Result<(), Box<dyn std::error::Error>> {
-        let entry = Entry::new()?;
+    fn test_load_entry() {
+        let entry = Entry::new().unwrap();
         println!("api_path: {:?}", entry.get_api_path());
         assert!(!entry.is_connected());
-
-        Ok(())
     }
 
     #[test]
