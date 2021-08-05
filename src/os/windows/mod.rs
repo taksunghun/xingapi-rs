@@ -83,16 +83,15 @@ impl XingApi {
         let handle = self.caller.handle();
         let codes = handle.get_account_list();
 
-        let mut accounts = Vec::with_capacity(codes.len());
-        for code in codes {
-            let name = handle.get_account_name(&code);
-            let detail_name = handle.get_account_detail_name(&code);
-            let nickname = handle.get_account_nickname(&code);
-
-            accounts.push(Account { code, name, detail_name, nickname });
-        }
-
-        accounts
+        codes
+            .into_iter()
+            .map(|code| Account {
+                name: handle.get_account_name(&code),
+                detail_name: handle.get_account_detail_name(&code),
+                nickname: handle.get_account_nickname(&code),
+                code,
+            })
+            .collect()
     }
 
     pub fn client_ip(&self) -> String {
