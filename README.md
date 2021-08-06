@@ -9,6 +9,11 @@
 안전성과 간편성, 최적화를 동시에 추구하는 XingAPI 추상화 구현 라이브러리입니다.
 
 ## 튜토리얼
+### MFC DLL 설치
+[비주얼 스튜디오 2010 재배포 가능 패키지][mfc100]를 설치해주세요.
+
+[mfc100]: https://www.microsoft.com/ko-KR/download/details.aspx?id=26999
+
 ### XingAPI 설치
 이베스트투자증권에서 제공하는 XingAPI 32비트 버전 설치 파일을 받아 기본 위치인
 `C:\eBEST\xingAPI`에 설치해주세요.
