@@ -2,7 +2,7 @@
 
 // 시간당 요청 제한 횟수에 맞춰 여러 가지 TR을 동시에 요청하는 예제입니다.
 
-use clap::Clap;
+use clap::{App, Arg};
 use std::time::Duration;
 use xingapi::{
     data::{Block, Data, DataType},
@@ -12,22 +12,21 @@ use xingapi::{
     XingApi,
 };
 
-#[derive(Clap)]
-struct Opts {
-    #[clap(short)]
-    id: String,
-    #[clap(short)]
-    pw: String,
-}
-
 fn main() {
-    let opts = Opts::parse();
+    let matches = App::new("tasks")
+        .arg(Arg::with_name("id").short("i").required(true).takes_value(true))
+        .arg(Arg::with_name("pw").short("p").required(true).takes_value(true))
+        .get_matches();
+
+    let id = matches.value_of("id").unwrap();
+    let pw = matches.value_of("pw").unwrap();
+
     let xingapi = XingApi::new().unwrap();
 
     xingapi.connect("demo.ebestsec.co.kr", 20001, None, None).unwrap();
     println!("server connected");
 
-    let login = xingapi.login(&opts.id, &opts.pw, "", false).unwrap();
+    let login = xingapi.login(id, pw, "", false).unwrap();
     println!("login: {:?}", login);
     assert!(login.is_ok());
 

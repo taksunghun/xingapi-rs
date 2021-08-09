@@ -2,7 +2,7 @@
 
 // 실시간 TR을 요청하는 예제입니다.
 
-use clap::Clap;
+use clap::{App, Arg};
 use lazy_static::lazy_static;
 use xingapi::{
     data::{Block, Data, DataType},
@@ -54,16 +54,6 @@ impl Market {
     }
 }
 
-#[derive(Clap)]
-struct Opts {
-    #[clap(short)]
-    id: String,
-    #[clap(short)]
-    pw: String,
-    #[clap(short)]
-    code: String,
-}
-
 fn main() {
     lazy_static! {
         static ref QUIT: AtomicBool = AtomicBool::new(false);
@@ -74,13 +64,22 @@ fn main() {
     })
     .unwrap();
 
-    let opts = Opts::parse();
+    let matches = App::new("listen-volume")
+        .arg(Arg::with_name("id").short("i").required(true).takes_value(true))
+        .arg(Arg::with_name("pw").short("p").required(true).takes_value(true))
+        .arg(Arg::with_name("code").short("c").required(true).takes_value(true))
+        .get_matches();
+
+    let id = matches.value_of("id").unwrap();
+    let pw = matches.value_of("pw").unwrap();
+    let code = matches.value_of("code").unwrap();
+
     let xingapi = XingApi::new().unwrap();
 
     xingapi.connect("demo.ebestsec.co.kr", 20001, None, None).unwrap();
     println!("server connected");
 
-    let login = xingapi.login(&opts.id, &opts.pw, "", false).unwrap();
+    let login = xingapi.login(id, pw, "", false).unwrap();
     if login.is_ok() {
         println!("login succeed: {}, {}", login.code(), login.message());
     } else {
@@ -90,20 +89,20 @@ fn main() {
 
     // 종목 코드가 어느 시장에 상장되어 있는지 검색합니다.
     let (tr_code, market) = {
-        if Market::Kospi.is_listed(&xingapi, &opts.code) {
+        if Market::Kospi.is_listed(&xingapi, code) {
             ("S3_", "KOSPI")
-        } else if Market::Kosdaq.is_listed(&xingapi, &opts.code) {
+        } else if Market::Kosdaq.is_listed(&xingapi, code) {
             ("K3_", "KOSDAQ")
         } else {
-            eprintln!("unknown ticker: {}", opts.code);
+            eprintln!("unknown ticker: {}", code);
             return;
         }
     };
 
     let real = Arc::new(Real::new(xingapi.clone()).unwrap());
 
-    real.subscribe(tr_code, vec![opts.code.clone()]).unwrap();
-    println!("registered: tr_code: {}, market: {}, ticker: {}", tr_code, market, opts.code);
+    real.subscribe(tr_code, vec![code.to_owned()]).unwrap();
+    println!("registered: tr_code: {}, market: {}, ticker: {}", tr_code, market, code);
 
     while !QUIT.load(Ordering::Relaxed) {
         if let Some(res) = real.recv_timeout(Duration::from_millis(10)) {
