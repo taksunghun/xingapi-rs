@@ -309,7 +309,7 @@ impl Entry {
     }
 
     pub fn advise_real_data(&self, hwnd: usize, tr_code: &str, data: &[String]) -> Result<(), ()> {
-        if data.iter().any(|s| !s.is_ascii()) {
+        if data.iter().any(|s| !s.is_ascii() || s.contains('\0')) {
             return Err(());
         }
 
@@ -337,7 +337,7 @@ impl Entry {
         tr_code: &str,
         data: &[String],
     ) -> Result<(), ()> {
-        if data.iter().any(|s| !s.is_ascii()) {
+        if data.iter().any(|s| !s.is_ascii() || s.contains('\0')) {
             return Err(());
         }
 
