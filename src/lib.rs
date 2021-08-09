@@ -19,17 +19,12 @@ pub mod response;
 mod euckr;
 mod os;
 
-use crate::{
-    data::Data,
-    error::Error,
-    response::{LoginResponse, QueryResponse, RealResponse},
-};
+use self::response::{LoginResponse, QueryResponse, RealResponse};
+use self::{data::Data, error::Error};
 
-use std::{
-    path::{Path, PathBuf},
-    sync::Arc,
-    time::Duration,
-};
+use std::path::{Path, PathBuf};
+use std::{sync::Arc, time::Duration};
+
 use xingapi_res::TrLayout;
 
 #[cfg(target_os = "windows")]

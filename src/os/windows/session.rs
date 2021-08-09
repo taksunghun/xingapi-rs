@@ -1,26 +1,18 @@
 // SPDX-License-Identifier: MPL-2.0
 
-use super::{
-    caller::Caller,
-    raw::{XM_DISCONNECT, XM_LOGIN, XM_LOGOUT},
-    window::Window,
-};
-use crate::{
-    error::{Error, Win32Error},
-    response::LoginResponse,
-};
+use super::raw::{XM_DISCONNECT, XM_LOGIN, XM_LOGOUT};
+use super::{caller::Caller, window::Window};
+use crate::error::{Error, Win32Error};
+use crate::response::LoginResponse;
 
 use encoding_rs::EUC_KR;
 use lazy_static::lazy_static;
-use std::{
-    ffi::CStr,
-    panic::{RefUnwindSafe, UnwindSafe},
-    sync::{
-        atomic::{AtomicPtr, Ordering},
-        mpsc::{self, SyncSender},
-        Arc, RwLock,
-    },
-};
+
+use std::ffi::CStr;
+use std::panic::{RefUnwindSafe, UnwindSafe};
+use std::sync::atomic::{AtomicPtr, Ordering};
+use std::sync::mpsc::{self, SyncSender};
+use std::sync::{Arc, RwLock};
 
 use winapi::shared::minwindef::{LPARAM, LRESULT, UINT, WPARAM};
 use winapi::shared::windef::HWND;

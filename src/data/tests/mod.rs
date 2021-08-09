@@ -4,11 +4,11 @@
 
 use super::{decode_array_block, decode_block, decode_non_block, encode, Block, Data, DataType};
 use crate::hashmap;
-use xingapi_res::{HeaderType, TrLayout};
 
 use hex_literal::hex;
 use lazy_static::lazy_static;
 use std::collections::HashMap;
+use xingapi_res::{HeaderType, TrLayout};
 
 lazy_static! {
     static ref LAYOUT_MAP: HashMap<String, TrLayout> = xingapi_res::load().unwrap();

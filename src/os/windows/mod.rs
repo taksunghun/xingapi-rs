@@ -10,12 +10,8 @@ mod real;
 mod session;
 
 use self::{caller::Caller, query::QueryWindow, real::RealWindow, session::SessionWindow};
-use crate::{
-    data::Data,
-    error::Error,
-    response::{LoginResponse, QueryResponse, RealResponse},
-    Account,
-};
+use crate::response::{LoginResponse, QueryResponse, RealResponse};
+use crate::{data::Data, error::Error, Account};
 
 use std::{collections::HashMap, path::Path, sync::Arc, time::Duration};
 use xingapi_res::TrLayout;

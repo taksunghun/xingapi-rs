@@ -6,18 +6,11 @@
 use super::entry::Entry;
 use crate::error::{EntryError, Error, Win32Error};
 
-use std::{
-    mem::MaybeUninit,
-    panic::{RefUnwindSafe, UnwindSafe},
-    path::Path,
-    pin::Pin,
-    sync::{
-        atomic::{AtomicPtr, Ordering},
-        RwLock, RwLockReadGuard, RwLockWriteGuard,
-    },
-    thread::{self, JoinHandle},
-    time::Duration,
-};
+use std::panic::{RefUnwindSafe, UnwindSafe};
+use std::sync::atomic::{AtomicPtr, Ordering};
+use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
+use std::thread::{self, JoinHandle};
+use std::{mem::MaybeUninit, path::Path, pin::Pin, time::Duration};
 
 use winapi::shared::minwindef::TRUE;
 use winapi::um::libloaderapi::GetModuleHandleA;

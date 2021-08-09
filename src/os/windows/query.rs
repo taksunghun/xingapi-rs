@@ -1,32 +1,20 @@
 // SPDX-License-Identifier: MPL-2.0
 
-use super::{
-    caller::Caller,
-    raw::{MSG_PACKET, RECV_PACKET, XM_RECEIVE_DATA, XM_TIMEOUT},
-    window::Window,
-};
-use crate::{
-    data::{self, Data, RawData},
-    error::{Error, Win32Error},
-    euckr,
-    response::QueryResponse,
-};
-use xingapi_res::TrLayout;
+use super::raw::{MSG_PACKET, RECV_PACKET, XM_RECEIVE_DATA, XM_TIMEOUT};
+use super::{caller::Caller, window::Window};
+use crate::data::{self, Data, RawData};
+use crate::error::{Error, Win32Error};
+use crate::{euckr, response::QueryResponse};
 
 use array_init::array_init;
 use lazy_static::lazy_static;
+use xingapi_res::TrLayout;
 
-use std::{
-    collections::HashMap,
-    iter::FromIterator,
-    ops::DerefMut,
-    panic::{RefUnwindSafe, UnwindSafe},
-    sync::{
-        atomic::{AtomicPtr, Ordering},
-        mpsc::{self, SyncSender},
-        Arc, Mutex, Weak,
-    },
-};
+use std::panic::{RefUnwindSafe, UnwindSafe};
+use std::sync::atomic::{AtomicPtr, Ordering};
+use std::sync::mpsc::{self, SyncSender};
+use std::sync::{Arc, Mutex, Weak};
+use std::{collections::HashMap, iter::FromIterator, ops::DerefMut};
 
 use winapi::shared::minwindef::{LPARAM, LRESULT, UINT, WPARAM};
 use winapi::shared::windef::HWND;

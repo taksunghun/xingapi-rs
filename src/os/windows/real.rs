@@ -1,25 +1,16 @@
 // SPDX-License-Identifier: MPL-2.0
 
-use super::{
-    caller::Caller,
-    raw::{RECV_REAL_PACKET, XM_RECEIVE_REAL_DATA},
-    window::Window,
-};
-use crate::{
-    data::{self, error::DecodeError},
-    error::Win32Error,
-    euckr,
-    response::RealResponse,
-};
+use super::raw::{RECV_REAL_PACKET, XM_RECEIVE_REAL_DATA};
+use super::{caller::Caller, window::Window};
+use crate::data::{self, error::DecodeError};
+use crate::{error::Win32Error, euckr, response::RealResponse};
 
 use crossbeam_channel::{Receiver, Sender};
 use lazy_static::lazy_static;
-use std::{
-    collections::HashMap,
-    sync::{atomic::AtomicPtr, Arc},
-    time::Duration,
-};
 use xingapi_res::TrLayout;
+
+use std::sync::{atomic::AtomicPtr, Arc};
+use std::{collections::HashMap, time::Duration};
 
 use winapi::shared::minwindef::{LPARAM, LRESULT, UINT, WPARAM};
 use winapi::shared::windef::HWND;
