@@ -47,6 +47,20 @@ struct IncompleteResponse {
     data: Vec<u8>,
 }
 
+impl IncompleteResponse {
+    fn into_real_res(self, tr_layouts: &HashMap<String, TrLayout>) -> RealResponse {
+        RealResponse {
+            key: self.key,
+            reg_key: self.reg_key,
+            data: if let Some(layout) = tr_layouts.get(&self.tr_code) {
+                data::decode_non_block(layout, &self.data)
+            } else {
+                Err(DecodeError::UnknownLayout)
+            },
+        }
+    }
+}
+
 struct WindowData {
     tx_res: Sender<IncompleteResponse>,
 }
@@ -97,41 +111,17 @@ impl RealWindow {
 
     pub fn recv(&self) -> RealResponse {
         let res = self.rx_res.recv().unwrap();
-        RealResponse::new(
-            res.key,
-            res.reg_key,
-            if let Some(layout) = self.tr_layouts.get(&res.tr_code) {
-                data::decode_non_block(layout, &res.data)
-            } else {
-                Err(DecodeError::UnknownLayout)
-            },
-        )
+        res.into_real_res(&self.tr_layouts)
     }
 
     pub fn recv_timeout(&self, timeout: Duration) -> Option<RealResponse> {
         let res = self.rx_res.recv_timeout(timeout).ok()?;
-        Some(RealResponse::new(
-            res.key,
-            res.reg_key,
-            if let Some(layout) = self.tr_layouts.get(&res.tr_code) {
-                data::decode_non_block(layout, &res.data)
-            } else {
-                Err(DecodeError::UnknownLayout)
-            },
-        ))
+        Some(res.into_real_res(&self.tr_layouts))
     }
 
     pub fn try_recv(&self) -> Option<RealResponse> {
         if let Ok(res) = self.rx_res.try_recv() {
-            Some(RealResponse::new(
-                res.key,
-                res.reg_key,
-                if let Some(layout) = self.tr_layouts.get(&res.tr_code) {
-                    data::decode_non_block(layout, &res.data)
-                } else {
-                    Err(DecodeError::UnknownLayout)
-                },
-            ))
+            Some(res.into_real_res(&self.tr_layouts))
         } else {
             None
         }

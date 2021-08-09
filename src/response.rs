@@ -142,9 +142,9 @@ impl std::fmt::Display for QueryResponse {
 /// 실시간 TR에 대한 서버의 응답입니다.
 #[derive(Clone, Debug)]
 pub struct RealResponse {
-    key: String,
-    reg_key: String,
-    data: Result<Data, DecodeError>,
+    pub(crate) key: String,
+    pub(crate) reg_key: String,
+    pub(crate) data: Result<Data, DecodeError>,
 }
 
 impl RealResponse {
@@ -159,10 +159,6 @@ impl RealResponse {
     /// 수신한 데이터에 대한 디코딩 결과를 반환합니다.
     pub fn data(&self) -> Result<&Data, &DecodeError> {
         self.data.as_ref()
-    }
-
-    pub(crate) fn new(key: String, reg_key: String, data: Result<Data, DecodeError>) -> Self {
-        Self { key, reg_key, data }
     }
 }
 
