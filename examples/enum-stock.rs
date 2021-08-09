@@ -51,7 +51,7 @@ fn main() {
         .map(|block| block["shcode"].as_str())
         .collect();
 
-    stocks.sort();
+    stocks.sort_unstable();
     println!("{:?}", stocks);
 
     xingapi.disconnect();

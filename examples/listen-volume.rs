@@ -49,8 +49,7 @@ impl Market {
             .as_array()
             .unwrap()
             .iter()
-            .find(|block| block["shcode"] == code)
-            .is_some()
+            .any(|block| block["shcode"] == code)
     }
 }
 
