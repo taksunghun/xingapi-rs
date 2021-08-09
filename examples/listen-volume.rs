@@ -4,20 +4,12 @@
 
 use clap::{App, Arg};
 use lazy_static::lazy_static;
-use xingapi::{
-    data::{Block, Data, DataType},
-    hashmap,
-    response::Message,
-    Real, XingApi,
-};
 
-use std::{
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc,
-    },
-    time::Duration,
-};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::{sync::Arc, time::Duration};
+
+use xingapi::data::{Block, Data, DataType};
+use xingapi::{hashmap, response::Message, Real, XingApi};
 
 enum Market {
     Kospi,

@@ -4,13 +4,9 @@
 
 use clap::{App, Arg};
 use std::time::Duration;
-use xingapi::{
-    data::{Block, Data, DataType},
-    error::ErrorKind,
-    hashmap,
-    response::Message,
-    XingApi,
-};
+
+use xingapi::data::{Block, Data, DataType};
+use xingapi::{error::ErrorKind, hashmap, response::Message, XingApi};
 
 fn main() {
     let matches = App::new("tasks")

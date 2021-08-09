@@ -3,12 +3,9 @@
 // 주식 시장의 종목을 조회하는 예제입니다.
 
 use clap::{App, Arg};
-use xingapi::{
-    data::{Block, Data, DataType},
-    hashmap,
-    response::Message,
-    XingApi,
-};
+
+use xingapi::data::{Block, Data, DataType};
+use xingapi::{hashmap, response::Message, XingApi};
 
 fn main() {
     let matches = App::new("enum-stock")

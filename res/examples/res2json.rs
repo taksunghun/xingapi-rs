@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 
-use std::fs::OpenOptions;
-
 use clap::{App, Arg};
+use std::fs::OpenOptions;
 
 fn main() {
     let matches = App::new("res2json")
