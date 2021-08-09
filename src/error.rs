@@ -4,6 +4,8 @@
 
 pub use crate::data::error::{DecodeError, EncodeError};
 
+use std::path::PathBuf;
+
 type ErrorBox = Box<dyn std::error::Error + Send + Sync + 'static>;
 
 /// XingAPI의 오류 종류에 대한 열거형 객체입니다.
@@ -177,7 +179,7 @@ pub enum EntryError {
     /// 라이브러리 불러오기 오류
     Library {
         /// DLL 경로
-        path: String,
+        path: PathBuf,
         /// 에러
         error: libloading::Error,
     },
@@ -186,7 +188,7 @@ pub enum EntryError {
         /// 기호명
         symbol: String,
         /// DLL 경로
-        path: String,
+        path: PathBuf,
         /// 에러
         error: libloading::Error,
     },

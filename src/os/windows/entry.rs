@@ -127,7 +127,7 @@ impl Entry {
         }
 
         unsafe { Library::new(path) }
-            .map_err(|error| EntryError::Library { path: path.to_string_lossy().into(), error })
+            .map_err(|error| EntryError::Library { path: path.into(), error })
     }
 
     fn load_entry(lib: Library, path: &Path) -> Result<Self, EntryError> {
@@ -135,7 +135,7 @@ impl Entry {
             ($sym_name:literal) => {
                 unsafe { lib.get($sym_name.as_bytes()) }.map_err(|error| EntryError::Symbol {
                     symbol: $sym_name.to_owned(),
-                    path: path.to_string_lossy().into(),
+                    path: path.into(),
                     error,
                 })
             };
