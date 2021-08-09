@@ -57,5 +57,5 @@ fn main() {
     xingapi.disconnect();
     println!("server disconnected");
 
-    assert_eq!(xingapi.is_connected(), false);
+    assert!(!xingapi.is_connected());
 }
