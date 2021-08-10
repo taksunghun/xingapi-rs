@@ -149,40 +149,24 @@ impl QueryWindow {
         }
     }
 
-    unsafe extern "system" fn wndproc(
-        hwnd: HWND,
-        msg: UINT,
-        wparam: WPARAM,
-        lparam: LPARAM,
-    ) -> LRESULT {
+    extern "system" fn wndproc(hwnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
         debug_assert!(Caller::is_caller_thread());
 
         match msg {
-            WM_DESTROY => {
+            WM_DESTROY => unsafe {
                 let window_data = GetWindowLongPtrA(hwnd, GWLP_USERDATA) as *mut WindowData;
                 assert_ne!(window_data, std::ptr::null_mut());
                 drop(Box::from_raw(window_data));
 
                 0
-            }
-            XM_RECEIVE_DATA | XM_TIMEOUT => {
-                Self::on_recv_msg(hwnd, msg, wparam, lparam);
-                0
-            }
-            _ => DefWindowProcA(hwnd, msg, wparam, lparam),
-        }
-    }
-
-    #[inline(always)]
-    fn on_recv_msg(hwnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) {
-        let window_data = unsafe {
-            let ptr = GetWindowLongPtrA(hwnd, GWLP_USERDATA) as *mut WindowData;
-            assert_ne!(ptr, std::ptr::null_mut());
-            &mut *ptr
-        };
-
-        match msg {
+            },
             XM_RECEIVE_DATA => {
+                let window_data = unsafe {
+                    let ptr = GetWindowLongPtrA(hwnd, GWLP_USERDATA) as *mut WindowData;
+                    assert_ne!(ptr, std::ptr::null_mut());
+                    &mut *ptr
+                };
+
                 let caller = unsafe { &*window_data.caller.as_ptr() };
                 let layout_tbl = unsafe { &*window_data.tr_layouts.as_ptr() };
 
@@ -255,30 +239,36 @@ impl QueryWindow {
                     }
                     4 => {
                         let res = window_data.res_tbl[req_id as usize].take().unwrap();
-                        let _ = window_data.tx_res_tbl[req_id as usize]
-                            .lock()
-                            .unwrap()
-                            .as_ref()
-                            .unwrap()
-                            .send(Some(res));
+
+                        let mut tx_res = window_data.tx_res_tbl[req_id as usize].lock().unwrap();
+                        let _ = tx_res.as_ref().unwrap().send(Some(res));
+                        *tx_res = None;
 
                         caller.entry().release_request_data(req_id);
                     }
                     _ => unreachable!(),
                 }
+
+                0
             }
             XM_TIMEOUT => {
+                let window_data = unsafe {
+                    let ptr = GetWindowLongPtrA(hwnd, GWLP_USERDATA) as *mut WindowData;
+                    assert_ne!(ptr, std::ptr::null_mut());
+                    &mut *ptr
+                };
+
                 let req_id = lparam as i32;
 
                 window_data.res_tbl[req_id as usize] = None;
-                let _ = window_data.tx_res_tbl[req_id as usize]
-                    .lock()
-                    .unwrap()
-                    .as_ref()
-                    .unwrap()
-                    .send(None);
+
+                let mut tx_res = window_data.tx_res_tbl[req_id as usize].lock().unwrap();
+                let _ = tx_res.as_ref().unwrap().send(None);
+                *tx_res = None;
+
+                0
             }
-            _ => unreachable!(),
+            _ => unsafe { DefWindowProcA(hwnd, msg, wparam, lparam) },
         }
     }
 }
