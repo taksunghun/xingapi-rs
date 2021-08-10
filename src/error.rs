@@ -6,8 +6,6 @@ pub use crate::data::error::{DecodeError, EncodeError};
 
 use std::path::PathBuf;
 
-type ErrorBox = Box<dyn std::error::Error + Send + Sync + 'static>;
-
 /// XingAPI의 오류 종류에 대한 열거형 객체입니다.
 ///
 /// 자주 발생되는 오류를 좀 더 쉽게 처리할 수 있습니다.
@@ -66,12 +64,6 @@ pub enum Error {
     Encode(EncodeError),
     /// 디코딩 오류
     Decode(DecodeError),
-    /// TR 레이아웃 파싱 오류
-    Res(xingapi_res::LoadError),
-    /// DLL 불러오기 오류
-    Entry(EntryError),
-    /// 기타 오류
-    Other(ErrorBox),
     /// 시간 초과
     TimedOut,
 }
@@ -86,7 +78,6 @@ impl Error {
             Self::Encode(_) => ErrorKind::InvalidInput,
             Self::Decode(_) => ErrorKind::InvalidData,
             Self::TimedOut => ErrorKind::TimedOut,
-            _ => ErrorKind::Other,
         }
     }
 }
@@ -100,31 +91,6 @@ impl From<EncodeError> for Error {
 impl From<DecodeError> for Error {
     fn from(err: DecodeError) -> Self {
         Self::Decode(err)
-    }
-}
-
-impl From<xingapi_res::LoadError> for Error {
-    fn from(err: xingapi_res::LoadError) -> Self {
-        Self::Res(err)
-    }
-}
-
-impl From<EntryError> for Error {
-    fn from(err: EntryError) -> Self {
-        Self::Entry(err)
-    }
-}
-
-impl From<ErrorBox> for Error {
-    fn from(err: ErrorBox) -> Self {
-        Self::Other(err)
-    }
-}
-
-#[cfg(windows)]
-impl From<Win32Error> for Error {
-    fn from(err: Win32Error) -> Self {
-        Self::Other(Box::new(err))
     }
 }
 
@@ -142,18 +108,6 @@ impl std::fmt::Display for Error {
                 write!(f, "decode error: ")?;
                 err.fmt(f)
             }
-            Self::Res(err) => {
-                write!(f, "res load error: ")?;
-                err.fmt(f)
-            }
-            Self::Entry(err) => {
-                write!(f, "entry error: ")?;
-                err.fmt(f)
-            }
-            Self::Other(err) => {
-                write!(f, "other error: ")?;
-                err.fmt(f)
-            }
             Self::TimedOut => f.write_str("request timed out"),
         }
     }
@@ -165,9 +119,6 @@ impl std::error::Error for Error {
             Self::XingApi { .. } => None,
             Self::Encode(err) => Some(err),
             Self::Decode(err) => Some(err),
-            Self::Res(err) => Some(err),
-            Self::Entry(err) => Some(err),
-            Self::Other(err) => Some(err.as_ref()),
             Self::TimedOut => None,
         }
     }
