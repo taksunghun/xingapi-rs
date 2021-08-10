@@ -19,8 +19,9 @@ pub mod response;
 mod euckr;
 mod os;
 
+use self::data::Data;
+use self::error::{Error, LoadError};
 use self::response::{LoginResponse, QueryResponse, RealResponse};
-use self::{data::Data, error::Error};
 
 use std::path::{Path, PathBuf};
 use std::{sync::Arc, time::Duration};
@@ -80,7 +81,7 @@ impl XingApiBuilder {
     }
 
     /// `XingApi` 객체를 생성합니다.
-    pub fn build(self) -> Result<Arc<XingApi>, Error> {
+    pub fn build(self) -> Result<Arc<XingApi>, LoadError> {
         #[cfg(not(windows))]
         unimplemented!();
 
@@ -118,7 +119,7 @@ pub struct XingApi(#[cfg(windows)] Arc<imp::XingApi>);
 #[cfg(any(windows, doc))]
 impl XingApi {
     /// 기본적인 설정으로 객체를 초기화합니다
-    pub fn new() -> Result<Arc<Self>, Error> {
+    pub fn new() -> Result<Arc<Self>, LoadError> {
         #[cfg(not(windows))]
         unimplemented!();
 
@@ -275,7 +276,7 @@ pub struct Real(#[cfg(windows)] imp::Real, Arc<XingApi>);
 #[cfg(any(windows, doc))]
 impl Real {
     /// 실시간 TR을 수신하는 객체를 생성합니다.
-    pub fn new(xingapi: Arc<XingApi>) -> Result<Self, Error> {
+    pub fn new(xingapi: Arc<XingApi>) -> Result<Self, LoadError> {
         #[cfg(not(windows))]
         unimplemented!();
 

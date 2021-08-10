@@ -10,8 +10,9 @@ mod real;
 mod session;
 
 use self::{caller::Caller, query::QueryWindow, real::RealWindow, session::SessionWindow};
+use crate::error::{Error, LoadError};
 use crate::response::{LoginResponse, QueryResponse, RealResponse};
-use crate::{data::Data, error::Error, Account};
+use crate::{data::Data, Account};
 
 use std::{collections::HashMap, path::Path, sync::Arc, time::Duration};
 use xingapi_res::TrLayout;
@@ -27,7 +28,7 @@ impl XingApi {
     pub fn new(
         path: Option<&Path>,
         layout_tbl: HashMap<String, TrLayout>,
-    ) -> Result<Arc<Self>, Error> {
+    ) -> Result<Arc<Self>, LoadError> {
         debug_assert!(!layout_tbl.iter().any(|(k, v)| **k != v.code));
 
         let caller = Arc::new(Caller::new(path)?);
@@ -124,7 +125,7 @@ pub struct Real {
 }
 
 impl Real {
-    pub fn new(xingapi: Arc<XingApi>) -> Result<Self, Error> {
+    pub fn new(xingapi: Arc<XingApi>) -> Result<Self, LoadError> {
         Ok(Self { window: RealWindow::new(xingapi.caller.clone(), xingapi.layout_tbl.clone())? })
     }
 

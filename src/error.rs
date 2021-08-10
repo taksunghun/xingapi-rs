@@ -173,6 +173,65 @@ impl std::error::Error for Error {
     }
 }
 
+#[derive(Debug)]
+pub enum LoadError {
+    /// TR 레이아웃 파싱 오류
+    Layout(xingapi_res::LoadError),
+    /// DLL 불러오기 오류
+    Entry(EntryError),
+    /// 기타 오류
+    #[cfg(any(windows, doc))]
+    #[cfg_attr(doc_cfg, doc(cfg(windows)))]
+    Win32(Win32Error),
+}
+
+impl From<xingapi_res::LoadError> for LoadError {
+    fn from(err: xingapi_res::LoadError) -> Self {
+        Self::Layout(err)
+    }
+}
+
+impl From<EntryError> for LoadError {
+    fn from(err: EntryError) -> Self {
+        Self::Entry(err)
+    }
+}
+
+#[cfg(windows)]
+impl From<Win32Error> for LoadError {
+    fn from(err: Win32Error) -> Self {
+        Self::Win32(err)
+    }
+}
+
+impl std::fmt::Display for LoadError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Layout(err) => {
+                write!(f, "layout error: {}", err)
+            }
+            Self::Entry(err) => {
+                write!(f, "entry error: {}", err)
+            }
+            #[cfg(windows)]
+            Self::Win32(err) => {
+                write!(f, "win32 error: {}", err)
+            }
+        }
+    }
+}
+
+impl std::error::Error for LoadError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Layout(err) => Some(err),
+            Self::Entry(err) => Some(err),
+            #[cfg(windows)]
+            Self::Win32(err) => Some(err),
+        }
+    }
+}
+
 /// DLL 불러오기 오류에 대한 객체입니다.
 #[derive(Debug)]
 pub enum EntryError {
