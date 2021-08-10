@@ -25,17 +25,21 @@ fn main() {
     println!("login: {:?}", login);
     assert!(login.is_ok());
 
-    let data = Data {
-        code: "t8425".into(),
-        data_type: DataType::Input,
-        blocks: hashmap! {
-            "t8425InBlock" => Block::Block(hashmap! {
-                "dummy" => "",
-            }),
-        },
-    };
-
-    let res = xingapi.request(&data, None, None).unwrap();
+    let res = xingapi
+        .request(
+            &Data {
+                code: "t8425".into(),
+                data_type: DataType::Input,
+                blocks: hashmap! {
+                    "t8425InBlock" => Block::Block(hashmap! {
+                        "dummy" => "",
+                    }),
+                },
+            },
+            None,
+            None,
+        )
+        .unwrap();
 
     for block in res.data().unwrap().blocks["t8425OutBlock"].as_array().unwrap() {
         println!("tmcode: {:0>4}, tmname: {}", block["tmcode"], block["tmname"]);

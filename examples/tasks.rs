@@ -41,7 +41,7 @@ fn main() {
     let t1101_loop = std::thread::spawn(move || {
         let xingapi = xingapi_clone;
 
-        let data = Data {
+        let req_data = Data {
             code: "t1101".into(),
             data_type: DataType::Input,
             blocks: hashmap! {
@@ -53,7 +53,7 @@ fn main() {
 
         for i in 0..20 * t1101_one_sec_limit {
             let res = loop {
-                let result = xingapi.request(&data, None, None);
+                let result = xingapi.request(&req_data, None, None);
                 match &result {
                     Ok(_) => {}
                     Err(err) => {
@@ -86,7 +86,7 @@ fn main() {
     let t1764_loop = std::thread::spawn(move || {
         let xingapi = xingapi_clone;
 
-        let data = Data {
+        let req_data = Data {
             code: "t1764".into(),
             data_type: DataType::Input,
             blocks: hashmap! {
@@ -99,7 +99,7 @@ fn main() {
 
         for i in 0..20 * t1764_one_sec_limit + 1 {
             let res = loop {
-                let result = xingapi.request(&data, None, None);
+                let result = xingapi.request(&req_data, None, None);
                 match &result {
                     Ok(_) => {}
                     Err(err) => {
