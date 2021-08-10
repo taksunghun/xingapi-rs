@@ -13,11 +13,11 @@ pub struct Window {
 
 impl Window {
     pub fn new(caller: Arc<Caller>, class_name: &[i8]) -> Result<Self, Win32Error> {
+        // 윈도우 생성 이후 패닉이 발생하면 윈도우가 소멸되지 않으므로
         // 힙 영역 메모리 할당을 먼저 합니다.
         let mut window = Window { caller: caller.clone(), hwnd: 0 };
         let hwnd = caller.create_window(class_name)?;
 
-        // 윈도우 생성 이후 패닉이 발생하면 윈도우가 소멸되지 않기 때문입니다.
         if hwnd != 0 {
             window.hwnd = hwnd;
             Ok(window)

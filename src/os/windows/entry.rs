@@ -22,13 +22,13 @@ type Disconnect = unsafe extern "system" fn() -> BOOL;
 type Login = unsafe extern "system" fn(HWND, *const u8, *const u8, *const u8, c_int, BOOL) -> BOOL;
 type Logout = unsafe extern "system" fn(HWND) -> BOOL;
 
-// 조회TR
+// 조회 TR
 type Request =
     unsafe extern "system" fn(HWND, *const u8, *const u8, c_int, BOOL, *const u8, c_int) -> c_int;
 type ReleaseRequestData = unsafe extern "system" fn(c_int);
 type ReleaseMessageData = unsafe extern "system" fn(LPARAM);
 
-// 실시간TR
+// 실시간 TR
 type AdviseRealData = unsafe extern "system" fn(HWND, *const u8, *const u8, c_int) -> BOOL;
 type UnadviseRealData = unsafe extern "system" fn(HWND, *const u8, *const u8, c_int) -> BOOL;
 type UnadviseWindow = unsafe extern "system" fn(HWND) -> BOOL;
@@ -53,7 +53,7 @@ type GetTrCountBaseSec = unsafe extern "system" fn(*const u8) -> c_int;
 type GetTrCountRequest = unsafe extern "system" fn(*const u8) -> c_int;
 type GetTrCountLimit = unsafe extern "system" fn(*const u8) -> c_int;
 
-// 부가기능
+// 부가 기능
 type RequestService = unsafe extern "system" fn(HWND, *const u8, *const u8) -> c_int;
 type RemoveService = unsafe extern "system" fn(HWND, *const u8, *const u8) -> c_int;
 
@@ -75,12 +75,12 @@ pub struct Entry {
     login: Symbol<Login>,
     logout: Symbol<Logout>,
 
-    // 조회TR
+    // 조회 TR
     request: Symbol<Request>,
     release_request_data: Symbol<ReleaseRequestData>,
     release_message_data: Symbol<ReleaseMessageData>,
 
-    // 실시간TR
+    // 실시간 TR
     advise_real_data: Symbol<AdviseRealData>,
     unadvise_real_data: Symbol<UnadviseRealData>,
     unadvise_window: Symbol<UnadviseWindow>,
@@ -105,7 +105,7 @@ pub struct Entry {
     get_tr_count_request: Symbol<GetTrCountRequest>,
     get_tr_count_limit: Symbol<GetTrCountLimit>,
 
-    // 부가기능
+    // 부가 기능
     request_service: Symbol<RequestService>,
     remove_service: Symbol<RemoveService>,
 
@@ -116,7 +116,6 @@ pub struct Entry {
     decompress: Symbol<Decompress>,
 }
 
-#[allow(dead_code)]
 impl Entry {
     fn load_lib(path: &Path) -> Result<Library, EntryError> {
         if Library::open_already_loaded(path).is_ok() {

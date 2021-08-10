@@ -182,7 +182,6 @@ impl QueryWindow {
             &mut *ptr
         };
 
-        // req = request, res = response
         match msg {
             XM_RECEIVE_DATA => {
                 let caller = unsafe { &*window_data.caller.as_ptr() };
@@ -199,7 +198,7 @@ impl QueryWindow {
                     window_data.res_tbl[req_id as usize] = Some(IncompleteResponse::empty());
                 }
 
-                // RECV_PACKET보다 MSG_PACKET이 먼저 오는 경우도 있습니다.
+                // RECV_PACKET보다 MSG_PACKET이 먼저 수신되는 경우도 있습니다.
                 match wparam {
                     1 => {
                         let recv_packet = unsafe { &*(lparam as *const RECV_PACKET) };
