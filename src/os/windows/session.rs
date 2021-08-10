@@ -24,8 +24,7 @@ use winapi::um::winuser::{
 
 lazy_static! {
     static ref SESSION_WNDCLASS: Vec<i8> = {
-        let class_name: Vec<i8> =
-            b"xingapi::session::SESSION_WNDCLASS\0".iter().map(|&c| c as i8).collect();
+        let class_name: Vec<i8> = b"xingapi_session\0".iter().map(|&c| c as i8).collect();
 
         unsafe {
             RegisterClassExA(&WNDCLASSEXA {

@@ -26,8 +26,7 @@ use winapi::um::winuser::{
 
 lazy_static! {
     static ref QUERY_WNDCLASS: Vec<i8> = {
-        let class_name: Vec<i8> =
-            b"xingapi::query::QUERY_WNDCLASS\0".iter().map(|&c| c as i8).collect();
+        let class_name: Vec<i8> = b"xingapi_query\0".iter().map(|&c| c as i8).collect();
 
         unsafe {
             RegisterClassExA(&WNDCLASSEXA {
