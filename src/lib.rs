@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: MPL-2.0
 
-//! A safe, easy and optimized abstraction for XingAPI with support for async/await syntax.
+//! A safe, easy and optimized abstraction for XingAPI.
 //!
 //! 안전성과 간편성, 최적화를 동시에 추구하는 XingAPI 추상화 구현 라이브러리입니다.
 //!
 //! # 요구 사항
 //! - 이베스트투자증권의 윈도우용 XingAPI 최신 버전
-//! - RES 파일 (TR 레이아웃). DevCenter 프로그램에서 다운로드 받을 수 있습니다.
+//! - RES 파일 (TR 레이아웃)
+//! - VS2010 재배포 가능 패키지 (런타임)
 //!
-//! XingAPI에는 리눅스 버전도 있지만 아직은 윈도우 32비트 버전의 XingAPI만 지원합니다.
+//! 아직은 윈도우 32비트 버전의 XingAPI만 지원합니다.
 
 #![cfg_attr(doc_cfg, feature(doc_cfg))]
 
