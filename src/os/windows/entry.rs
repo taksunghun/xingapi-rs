@@ -175,7 +175,7 @@ impl Entry {
     }
 
     pub fn new() -> Result<Self, EntryError> {
-        let sdk_lib_path = Path::new("C:/eBEST/xingAPI/xingAPI.dll");
+        let sdk_lib_path = Path::new("C:\\eBEST\\xingAPI\\xingAPI.dll");
         let lib_name = Path::new("xingAPI.dll");
 
         match Self::load_lib(sdk_lib_path) {
