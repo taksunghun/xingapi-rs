@@ -177,7 +177,7 @@ pub(crate) fn decode(
 }
 
 // block mode인 non-occurs(단일) output 데이터를 디코딩합니다.
-pub(crate) fn decode_block(
+fn decode_block(
     tr_layout: &TrLayout,
     block_layout: &BlockLayout,
     raw_data: &[u8],
@@ -203,7 +203,7 @@ pub(crate) fn decode_block(
 }
 
 // block mode인 occurs(배열) output 데이터를 디코딩합니다.
-pub(crate) fn decode_array_block(
+fn decode_array_block(
     tr_layout: &TrLayout,
     block_layout: &BlockLayout,
     raw_data: &[u8],
