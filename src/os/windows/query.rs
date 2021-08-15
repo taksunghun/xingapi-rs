@@ -10,7 +10,6 @@ use array_init::array_init;
 use lazy_static::lazy_static;
 use xingapi_res::TrLayout;
 
-use std::panic::{RefUnwindSafe, UnwindSafe};
 use std::sync::atomic::{AtomicPtr, Ordering};
 use std::sync::mpsc::{self, SyncSender};
 use std::sync::{Arc, Mutex, Weak};
@@ -272,6 +271,3 @@ impl QueryWindow {
         }
     }
 }
-
-impl UnwindSafe for QueryWindow {}
-impl RefUnwindSafe for QueryWindow {}

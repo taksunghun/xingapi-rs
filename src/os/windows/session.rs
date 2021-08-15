@@ -9,7 +9,6 @@ use encoding_rs::EUC_KR;
 use lazy_static::lazy_static;
 
 use std::ffi::CStr;
-use std::panic::{RefUnwindSafe, UnwindSafe};
 use std::sync::atomic::{AtomicPtr, Ordering};
 use std::sync::mpsc::{self, SyncSender};
 use std::sync::{Arc, RwLock};
@@ -160,6 +159,3 @@ impl SessionWindow {
         }
     }
 }
-
-impl UnwindSafe for SessionWindow {}
-impl RefUnwindSafe for SessionWindow {}
