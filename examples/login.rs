@@ -24,7 +24,7 @@ fn main() {
     assert!(login.is_ok());
 
     println!("accounts:");
-    xingapi.accounts().iter().for_each(|acc| println!("{:?}", acc));
+    xingapi.accounts().iter().for_each(|acc| println!("  {:?}", acc));
 
     println!("client_ip: {:?}", xingapi.client_ip());
     println!("server_name: {:?}", xingapi.server_name(),);

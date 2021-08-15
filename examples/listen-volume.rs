@@ -6,7 +6,7 @@ use clap::{App, Arg};
 use lazy_static::lazy_static;
 
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::{sync::Arc, time::Duration};
+use std::time::Duration;
 
 use xingapi::data::{Block, Data, DataType};
 use xingapi::{hashmap, response::Message, Real, XingApi};
@@ -90,9 +90,9 @@ fn main() {
         }
     };
 
-    let real = Arc::new(Real::new(xingapi.clone()).unwrap());
+    let real = Real::new(xingapi.clone()).unwrap();
 
-    real.subscribe(tr_code, vec![code.to_owned()]).unwrap();
+    real.subscribe(tr_code, &[code]).unwrap();
     println!("registered: tr_code: {}, market: {}, ticker: {}", tr_code, market, code);
 
     while !QUIT.load(Ordering::Relaxed) {
