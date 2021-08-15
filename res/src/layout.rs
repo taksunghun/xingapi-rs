@@ -76,7 +76,9 @@ pub struct TrLayout {
     pub desc: String,
     /// TR 코드
     pub code: String,
-    /// 각 필드 끝에 attribute byte 존재 여부
+    /// attribute byte 존재 여부
+    ///
+    /// 이 값이 참이면 각 필드의 끝에 attribute byte가 존재합니다.
     pub attr: bool,
     /// block mode 여부
     pub block: bool,
@@ -257,7 +259,7 @@ pub struct BlockLayout {
     pub block_type: BlockType,
     /// 배열 여부
     pub occurs: bool,
-    /// 각 필드에 attribute byte를 포함한 전체 길이
+    /// attribute byte를 포함한 전체 길이
     pub len: usize,
     /// 필드 목록
     pub fields: Vec<FieldLayout>,
@@ -339,7 +341,7 @@ impl AsRef<BlockLayout> for BlockLayout {
 
 /// 필드 타입에 대한 열거형 객체입니다.
 ///
-/// `long`과 `int`는 모두 `FieldType::Int`로 간주됩니다.
+/// 모든 값은 문자열로 제공되며 값의 종류에 따라 분류됩니다.
 #[derive(Copy, Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum FieldType {
@@ -388,7 +390,7 @@ pub struct FieldLayout {
     pub field_type: FieldType,
     /// attribute byte를 제외한 길이
     pub len: usize,
-    /// 소수점 위치
+    /// 소수점 자릿수
     pub point: Option<usize>,
 }
 

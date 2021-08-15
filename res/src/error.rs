@@ -5,7 +5,7 @@
 use crate::read::{Position, Read};
 use std::{fmt, path::PathBuf};
 
-/// 파싱에 실패했을 때 발생하는 에러입니다.
+/// 파싱에 실패하면 발생하는 에러입니다.
 #[derive(Debug)]
 pub struct Error {
     line: usize,
