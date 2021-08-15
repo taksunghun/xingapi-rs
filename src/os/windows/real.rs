@@ -96,12 +96,20 @@ impl RealWindow {
         Ok(Self { caller, tr_layouts, window, _window_data, rx_res })
     }
 
-    pub fn subscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), ()> {
-        self.caller.handle().advise_real_data(*self.window, tr_code, data)
+    pub fn subscribe<T: AsRef<str>>(&self, tr_code: &str, tickers: &[T]) -> Result<(), ()> {
+        self.caller.handle().advise_real_data(
+            *self.window,
+            tr_code,
+            tickers.iter().map(|t| t.as_ref().into()).collect(),
+        )
     }
 
-    pub fn unsubscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), ()> {
-        self.caller.handle().unadvise_real_data(*self.window, tr_code, data)
+    pub fn unsubscribe<T: AsRef<str>>(&self, tr_code: &str, tickers: &[T]) -> Result<(), ()> {
+        self.caller.handle().unadvise_real_data(
+            *self.window,
+            tr_code,
+            tickers.iter().map(|t| t.as_ref().into()).collect(),
+        )
     }
 
     pub fn unsubscribe_all(&self) -> Result<(), ()> {

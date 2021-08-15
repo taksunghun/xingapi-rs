@@ -288,23 +288,23 @@ impl Real {
     /// 실시간 TR을 지정된 종목 코드로 등록합니다.
     ///
     /// `data`는 종목 코드 목록이며 종목 코드는 ASCII 문자로만 구성되어야 합니다.
-    pub fn subscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), ()> {
+    pub fn subscribe<T: AsRef<str>>(&self, tr_code: &str, tickers: &[T]) -> Result<(), ()> {
         #[cfg(not(windows))]
         unimplemented!();
 
         #[cfg(windows)]
-        self.0.subscribe(tr_code, data)
+        self.0.subscribe(tr_code, tickers)
     }
 
     /// 실시간 TR을 지정된 종목 코드로 등록 해제합니다.
     ///
     /// `data`는 종목 코드 목록이며 종목 코드는 ASCII 문자로만 구성되어야 합니다.
-    pub fn unsubscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), ()> {
+    pub fn unsubscribe<T: AsRef<str>>(&self, tr_code: &str, tickers: &[T]) -> Result<(), ()> {
         #[cfg(not(windows))]
         unimplemented!();
 
         #[cfg(windows)]
-        self.0.unsubscribe(tr_code, data)
+        self.0.unsubscribe(tr_code, tickers)
     }
 
     /// 실시간 TR을 모두 등록 해제합니다.

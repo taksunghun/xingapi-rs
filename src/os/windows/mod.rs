@@ -129,12 +129,12 @@ impl Real {
         Ok(Self { window: RealWindow::new(xingapi.caller.clone(), xingapi.layout_tbl.clone())? })
     }
 
-    pub fn subscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), ()> {
-        self.window.subscribe(tr_code, data)
+    pub fn subscribe<T: AsRef<str>>(&self, tr_code: &str, tickers: &[T]) -> Result<(), ()> {
+        self.window.subscribe(tr_code, tickers)
     }
 
-    pub fn unsubscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), ()> {
-        self.window.unsubscribe(tr_code, data)
+    pub fn unsubscribe<T: AsRef<str>>(&self, tr_code: &str, tickers: &[T]) -> Result<(), ()> {
+        self.window.unsubscribe(tr_code, tickers)
     }
 
     pub fn unsubscribe_all(&self) -> Result<(), ()> {
