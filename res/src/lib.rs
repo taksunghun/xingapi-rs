@@ -44,18 +44,18 @@ pub fn load_from_path<P: AsRef<Path>>(path: P) -> Result<HashMap<String, TrLayou
         tasks.push(thread::Builder::new().stack_size(1024 * 256).spawn(task).unwrap());
     }
 
-    let mut res_tbl: HashMap<String, TrLayout> = HashMap::new();
+    let mut layout_tbl = HashMap::new();
     for task in tasks {
-        let res = task.join().unwrap()?;
+        let layout = task.join().unwrap()?;
 
-        if let Some(other_res) = res_tbl.get(&res.code) {
-            if res != *other_res {
-                return Err(LoadError::Confilict(res.code.to_owned()));
+        if let Some(other) = layout_tbl.get(&layout.code) {
+            if layout != *other {
+                return Err(LoadError::Confilict(layout.code.into()));
             }
         } else {
-            res_tbl.insert(res.code.to_owned(), res);
+            layout_tbl.insert(layout.code.to_owned(), layout);
         }
     }
 
-    Ok(res_tbl)
+    Ok(layout_tbl)
 }
