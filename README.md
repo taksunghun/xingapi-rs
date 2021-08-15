@@ -9,21 +9,23 @@
 안전성과 간편성, 최적화를 동시에 추구하는 XingAPI 추상화 구현 라이브러리입니다.
 
 ## 튜토리얼
-### MFC DLL 설치
-[비주얼 스튜디오 2010 재배포 가능 패키지][mfc100]를 설치해주세요.
+### `mfc100.dll` 설치
+[VS2010 재배포 가능 패키지][mfc100]가 존재하지 않는 경우 설치해주세요.
 
 [mfc100]: https://www.microsoft.com/ko-KR/download/details.aspx?id=26999
 
 ### XingAPI 설치
-이베스트투자증권에서 제공하는 XingAPI 32비트 버전 설치 파일을 받아 기본 위치인
-`C:\eBEST\xingAPI`에 설치해주세요.
+이베스트투자증권에서 제공하는 XingAPI 윈도우 32비트 버전이 필요합니다. 설치
+프로그램을 실행하시거나 `C:\eBEST\xingAPI`에 설치해주세요.
 
 ### Rust 개발환경 구성
 먼저 Visual Studio에 포함되어 있는 MSVC 컴파일러를 설치해주세요.
 
-[rust-lang.org][rust-lang-start]에서 `rustup-init.exe`를 다운로드 받고 실행하여
-설치해주세요. 64비트 버전을 설치하신 경우 콘솔에 다음의 명령어를 입력하여 직접
-32비트 타겟을 추가해주셔야 합니다.
+그리고 [rust-lang.org][rust-get-started]에서 `rustup-init.exe`를 다운로드 받고
+실행하여 설치해주세요. 64비트 버전을 설치하신 경우 콘솔에 다음의 명령어를
+입력하여 직접 32비트 타겟을 추가해주셔야 합니다.
+
+[rust-get-started]: https://www.rust-lang.org/learn/get-started
 
 ```sh
 rustup target add i686-pc-windows-msvc
@@ -33,7 +35,7 @@ rustup target add i686-pc-windows-msvc
 `cargo new` 명령어를 콘솔에서 사용하여 프로젝트를 생성해주세요.
 
 ```sh
-cargo new xingapi-login
+cargo new ebest-login
 ```
 
 `Cargo.toml` 프로젝트 구성 파일에 다음과 같이 의존성 패키지 목록에 `clap`,
@@ -41,7 +43,7 @@ cargo new xingapi-login
 
 ```toml
 [package]
-name = "xingapi-login"
+name = "ebest-login"
 version = "0.1.0"
 edition = "2018"
 
@@ -58,7 +60,8 @@ target = "i686-pc-windows-msvc"
 ```
 
 ### 소스코드 작성
-`src/main.rs` 파일에 다음의 소스 코드로 재작성해주세요.
+`src/main.rs` 파일에 다음의 소스 코드를 복사하여 붙여넣기 해주세요.
+
 ```rust
 use clap::Clap;
 use xingapi::{response::Message, XingApi};
@@ -85,7 +88,7 @@ fn main() {
     xingapi.disconnect();
     println!("server disconnected");
 
-    assert_eq!(xingapi.is_connected(), false);
+    assert!(!xingapi.is_connected());
 }
 ```
 
@@ -106,10 +109,9 @@ cargo run --target i686-pc-windows-msvc -- -i $ID -p $PW
 Rust 언어가 처음이시라면 [온라인 설명서][book]나 그 [번역본][book-ko]을
 읽어보세요. 한국에 서적으로도 출간되어 있습니다.
 
+[book]: https://doc.rust-lang.org/book/
+[book-ko]: https://rinthel.github.io/rust-lang-book-ko/
+
 ## 라이선스
 라이선스는 Mozilla Public License 2.0을 채택하고 있습니다. 라이브러리의 소스
 코드를 수정하지 않는 한 출처를 밝히고 자유롭게 사용하셔도 됩니다.
-
-[rust-lang-start]: https://www.rust-lang.org/learn/get-started
-[book]: https://doc.rust-lang.org/book/
-[book-ko]: https://rinthel.github.io/rust-lang-book-ko/
