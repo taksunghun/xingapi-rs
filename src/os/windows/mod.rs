@@ -28,7 +28,7 @@ impl XingApi {
     pub fn new(
         path: Option<&Path>,
         layout_tbl: HashMap<String, TrLayout>,
-    ) -> Result<Arc<Self>, LoadError> {
+    ) -> Result<Self, LoadError> {
         debug_assert!(!layout_tbl.iter().any(|(k, v)| **k != v.code));
 
         let caller = Arc::new(Caller::new(path)?);
@@ -36,7 +36,7 @@ impl XingApi {
         let session_window = SessionWindow::new(caller.clone())?;
         let query_window = QueryWindow::new(caller.clone(), layout_tbl.clone())?;
 
-        Ok(Arc::new(XingApi { caller, layout_tbl, session_window, query_window }))
+        Ok(XingApi { caller, layout_tbl, session_window, query_window })
     }
 
     pub fn connect(
@@ -125,7 +125,7 @@ pub struct Real {
 }
 
 impl Real {
-    pub fn new(xingapi: Arc<XingApi>) -> Result<Self, LoadError> {
+    pub fn new(xingapi: &XingApi) -> Result<Self, LoadError> {
         Ok(Self { window: RealWindow::new(xingapi.caller.clone(), xingapi.layout_tbl.clone())? })
     }
 

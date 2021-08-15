@@ -115,7 +115,7 @@ impl Default for XingApiBuilder {
 /// 없이 곧바로 종료된다는 것에 유의해야 합니다.
 #[cfg(any(windows, doc))]
 #[cfg_attr(doc_cfg, doc(cfg(windows)))]
-pub struct XingApi(#[cfg(windows)] Arc<imp::XingApi>);
+pub struct XingApi(#[cfg(windows)] imp::XingApi);
 
 #[cfg(any(windows, doc))]
 impl XingApi {
@@ -282,7 +282,7 @@ impl Real {
         unimplemented!();
 
         #[cfg(windows)]
-        Ok(Self(imp::Real::new(xingapi.0.clone())?, xingapi))
+        Ok(Self(imp::Real::new(&xingapi.0)?, xingapi))
     }
 
     /// 실시간 TR을 지정된 종목 코드로 등록합니다.
