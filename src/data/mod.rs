@@ -126,9 +126,9 @@ impl Index<usize> for Block {
 pub struct Data {
     /// TR 코드
     pub code: String,
-    /// 데이터가 요청인지 응답인지에 대한 여부
+    /// 데이터 종류 (요청/응답)
     pub data_type: DataType,
-    /// 여러 블록에 대한 해시 테이블
+    /// 블록 테이블
     pub blocks: HashMap<String, Block>,
 }
 
