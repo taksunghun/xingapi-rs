@@ -135,7 +135,7 @@ impl QueryWindow {
             *tx_res_ref.deref_mut() = Some(tx_res);
         }
 
-        if let Some(res) = rx_res.recv().unwrap() {
+        if let Ok(Some(res)) = rx_res.recv() {
             Ok(QueryResponse::new(
                 &res.code,
                 &res.message,
