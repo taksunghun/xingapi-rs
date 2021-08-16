@@ -63,7 +63,7 @@ pub struct SessionWindow {
 }
 
 impl SessionWindow {
-    pub(crate) fn new(caller: Arc<Caller>) -> Result<Self, Win32Error> {
+    pub fn new(caller: Arc<Caller>) -> Result<Self, Win32Error> {
         let window = Window::new(caller.clone(), &SESSION_WNDCLASS)?;
         let window_data = WindowData::new(&window);
 

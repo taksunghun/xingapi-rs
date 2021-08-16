@@ -100,7 +100,7 @@ pub struct QueryWindow {
 }
 
 impl QueryWindow {
-    pub(crate) fn new(
+    pub fn new(
         caller: Arc<Caller>,
         tr_layouts: Arc<HashMap<String, TrLayout>>,
     ) -> Result<Self, Win32Error> {
