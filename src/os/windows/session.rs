@@ -45,12 +45,8 @@ struct WindowData {
 }
 
 impl WindowData {
-    fn empty() -> Self {
-        WindowData { tx_res: None }
-    }
-
     fn new(window: &Window) -> AtomicPtr<RwLock<Self>> {
-        let data = RwLock::new(WindowData::empty());
+        let data = RwLock::new(WindowData { tx_res: None });
         let mut ptr = AtomicPtr::new(Box::into_raw(Box::new(data)));
         unsafe {
             SetWindowLongPtrA(**window as _, GWLP_USERDATA, *ptr.get_mut() as _);
@@ -100,7 +96,7 @@ impl SessionWindow {
         handle.login(*self.window, id, pw, cert_pw, cert_err_dialog)?;
         let result = rx_res.recv().unwrap();
 
-        *window_data.write().unwrap() = WindowData::empty();
+        *window_data.write().unwrap() = WindowData { tx_res: None };
 
         if let Some(res) = result {
             Ok(res)
@@ -145,13 +141,13 @@ impl SessionWindow {
                             let _ = tx.try_send(Some(LoginResponse {
                                 code: EUC_KR
                                     .decode(CStr::from_ptr(wparam as _).to_bytes())
-                                .0
-                                .trim_end()
+                                    .0
+                                    .trim_end()
                                     .to_owned(),
                                 message: EUC_KR
                                     .decode(CStr::from_ptr(lparam as _).to_bytes())
-                                .0
-                                .trim_end()
+                                    .0
+                                    .trim_end()
                                     .to_owned(),
                             }));
                         }
