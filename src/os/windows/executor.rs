@@ -253,11 +253,11 @@ impl Executor {
 
                 // 일정 시간 동안 thread가 parking 됩니다.
                 if let Ok(func) = rx_func.recv_timeout(Duration::from_micros(100)) {
-                    Self::dispatch_func(&entry, func);
+                    Self::call_func(&entry, func);
 
                     for _ in 1..100 {
                         if let Ok(func) = rx_func.try_recv() {
-                            Self::dispatch_func(&entry, func);
+                            Self::call_func(&entry, func);
                         } else {
                             break;
                         }
@@ -290,7 +290,7 @@ impl Executor {
         })
     }
 
-    fn dispatch_func(entry: &Entry, func: Func) {
+    fn call_func(entry: &Entry, func: Func) {
         match func {
             // Win32 API
             Func::CreateWindow { args: (class_name,), tx_ret } => {
