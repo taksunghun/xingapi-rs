@@ -109,21 +109,28 @@ impl SessionWindow {
         }
     }
 
-    extern "system" fn wndproc(hwnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
+    unsafe extern "system" fn wndproc(
+        hwnd: HWND,
+        msg: UINT,
+        wparam: WPARAM,
+        lparam: LPARAM,
+    ) -> LRESULT {
         debug_assert!(Caller::is_caller_thread());
 
         match msg {
-            WM_DESTROY => unsafe {
+            WM_DESTROY => {
                 let window_data = GetWindowLongPtrA(hwnd, GWLP_USERDATA) as *mut RwLock<WindowData>;
                 assert_ne!(window_data, std::ptr::null_mut());
+
                 drop(Box::from_raw(window_data));
 
                 0
-            },
+            }
             XM_DISCONNECT | XM_LOGIN | XM_LOGOUT => {
-                let window_data = unsafe {
+                let window_data = {
                     let ptr = GetWindowLongPtrA(hwnd, GWLP_USERDATA) as *const RwLock<WindowData>;
                     assert_ne!(ptr, std::ptr::null());
+
                     (*ptr).read().unwrap()
                 };
 
@@ -135,18 +142,18 @@ impl SessionWindow {
                     }
                     XM_LOGIN => {
                         if let Some(tx) = &window_data.tx_res {
-                            let code = EUC_KR
-                                .decode(unsafe { CStr::from_ptr(wparam as _) }.to_bytes())
+                            let _ = tx.try_send(Some(LoginResponse {
+                                code: EUC_KR
+                                    .decode(CStr::from_ptr(wparam as _).to_bytes())
                                 .0
                                 .trim_end()
-                                .to_owned();
-                            let message = EUC_KR
-                                .decode(unsafe { CStr::from_ptr(lparam as _) }.to_bytes())
+                                    .to_owned(),
+                                message: EUC_KR
+                                    .decode(CStr::from_ptr(lparam as _).to_bytes())
                                 .0
                                 .trim_end()
-                                .to_owned();
-
-                            let _ = tx.try_send(Some(LoginResponse { code, message }));
+                                    .to_owned(),
+                            }));
                         }
                     }
                     XM_LOGOUT => {}
@@ -155,7 +162,7 @@ impl SessionWindow {
 
                 0
             }
-            _ => unsafe { DefWindowProcA(hwnd, msg, wparam, lparam) },
+            _ => DefWindowProcA(hwnd, msg, wparam, lparam),
         }
     }
 }

@@ -148,46 +148,51 @@ impl QueryWindow {
         }
     }
 
-    extern "system" fn wndproc(hwnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
+    unsafe extern "system" fn wndproc(
+        hwnd: HWND,
+        msg: UINT,
+        wparam: WPARAM,
+        lparam: LPARAM,
+    ) -> LRESULT {
         debug_assert!(Caller::is_caller_thread());
 
         match msg {
-            WM_DESTROY => unsafe {
+            WM_DESTROY => {
                 let window_data = GetWindowLongPtrA(hwnd, GWLP_USERDATA) as *mut WindowData;
                 assert_ne!(window_data, std::ptr::null_mut());
                 drop(Box::from_raw(window_data));
 
                 0
-            },
+            }
             XM_RECEIVE_DATA => {
-                let window_data = unsafe {
+                let window_data = {
                     let ptr = GetWindowLongPtrA(hwnd, GWLP_USERDATA) as *mut WindowData;
                     assert_ne!(ptr, std::ptr::null_mut());
                     &mut *ptr
                 };
 
-                let caller = unsafe { &*window_data.caller.as_ptr() };
-                let layout_tbl = unsafe { &*window_data.tr_layouts.as_ptr() };
+                let caller = &*window_data.caller.as_ptr();
+                let layout_tbl = &*window_data.tr_layouts.as_ptr();
 
                 let req_id = match wparam {
-                    1 => unsafe { &*(lparam as *const RECV_PACKET) }.req_id,
-                    2 | 3 => unsafe { &*(lparam as *const MSG_PACKET) }.req_id,
+                    1 => { &*(lparam as *const RECV_PACKET) }.req_id,
+                    2 | 3 => { &*(lparam as *const MSG_PACKET) }.req_id,
                     4 => lparam as _,
                     _ => unreachable!(),
-                };
+                } as usize;
 
-                if window_data.res_tbl[req_id as usize].is_none() {
-                    window_data.res_tbl[req_id as usize] = Some(IncompleteResponse::empty());
+                if window_data.res_tbl[req_id].is_none() {
+                    window_data.res_tbl[req_id] = Some(IncompleteResponse::empty());
                 }
 
                 // RECV_PACKET보다 MSG_PACKET이 먼저 수신되는 경우도 있습니다.
                 match wparam {
                     1 => {
-                        let recv_packet = unsafe { &*(lparam as *const RECV_PACKET) };
+                        let recv_packet = &*(lparam as *const RECV_PACKET);
                         let tr_code = euckr::decode(&recv_packet.tr_code);
                         let continue_key = euckr::decode(&recv_packet.continue_key);
 
-                        let res = window_data.res_tbl[req_id as usize].as_mut().unwrap();
+                        let res = window_data.res_tbl[req_id].as_mut().unwrap();
 
                         if res.elapsed_time < recv_packet.elapsed_time {
                             res.elapsed_time = recv_packet.elapsed_time;
@@ -197,10 +202,9 @@ impl QueryWindow {
                             res.continue_key = Some(continue_key.to_string());
                         }
 
-                        let raw_data = unsafe {
+                        let raw_data =
                             std::slice::from_raw_parts(recv_packet.data, recv_packet.data_len as _)
-                                .to_owned()
-                        };
+                                .to_owned();
 
                         if let Some(tr_layout) = layout_tbl.get(tr_code.as_ref()) {
                             if tr_layout.block {
@@ -219,16 +223,14 @@ impl QueryWindow {
                         }
                     }
                     2 => {
-                        let msg_packet = unsafe { &*(lparam as *const MSG_PACKET) };
+                        let msg_packet = &*(lparam as *const MSG_PACKET);
 
-                        let res = window_data.res_tbl[req_id as usize].as_mut().unwrap();
+                        let res = window_data.res_tbl[req_id].as_mut().unwrap();
                         res.code = euckr::decode(&msg_packet.msg_code).to_string();
-                        res.message = euckr::decode(unsafe {
-                            std::slice::from_raw_parts(
-                                msg_packet.msg_data,
-                                msg_packet.msg_data_len as usize,
-                            )
-                        })
+                        res.message = euckr::decode(std::slice::from_raw_parts(
+                            msg_packet.msg_data,
+                            msg_packet.msg_data_len as usize,
+                        ))
                         .to_string();
 
                         caller.entry().release_message_data(lparam);
@@ -237,13 +239,13 @@ impl QueryWindow {
                         caller.entry().release_message_data(lparam);
                     }
                     4 => {
-                        let res = window_data.res_tbl[req_id as usize].take().unwrap();
+                        let res = window_data.res_tbl[req_id].take().unwrap();
 
-                        let mut tx_res = window_data.tx_res_tbl[req_id as usize].lock().unwrap();
+                        let mut tx_res = window_data.tx_res_tbl[req_id].lock().unwrap();
                         let _ = tx_res.as_ref().unwrap().send(Some(res));
                         *tx_res = None;
 
-                        caller.entry().release_request_data(req_id);
+                        caller.entry().release_request_data(req_id as _);
                     }
                     _ => unreachable!(),
                 }
@@ -251,23 +253,23 @@ impl QueryWindow {
                 0
             }
             XM_TIMEOUT => {
-                let window_data = unsafe {
+                let window_data = {
                     let ptr = GetWindowLongPtrA(hwnd, GWLP_USERDATA) as *mut WindowData;
                     assert_ne!(ptr, std::ptr::null_mut());
                     &mut *ptr
                 };
 
-                let req_id = lparam as i32;
+                let req_id = lparam as usize;
 
-                window_data.res_tbl[req_id as usize] = None;
+                window_data.res_tbl[req_id] = None;
 
-                let mut tx_res = window_data.tx_res_tbl[req_id as usize].lock().unwrap();
+                let mut tx_res = window_data.tx_res_tbl[req_id].lock().unwrap();
                 let _ = tx_res.as_ref().unwrap().send(None);
                 *tx_res = None;
 
                 0
             }
-            _ => unsafe { DefWindowProcA(hwnd, msg, wparam, lparam) },
+            _ => DefWindowProcA(hwnd, msg, wparam, lparam),
         }
     }
 }
