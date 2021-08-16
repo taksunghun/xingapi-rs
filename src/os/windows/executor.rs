@@ -22,7 +22,7 @@ use winapi::um::winuser::{
 macro_rules! define_fn {
     ($($func_camel_case:ident($($arg:ty$(,)?)*) -> $ret:ty)*) => {
         #[allow(dead_code)]
-        enum CallerFn {
+        enum Func {
             $($func_camel_case {
                 args: ($($arg,)*),
                 tx_ret: crossbeam_channel::Sender<$ret>,
@@ -62,7 +62,7 @@ macro_rules! call {
     ($self:ident, $func_camel_case:ident($($arg:expr$(,)?)*)) => {{
         let (tx_ret, rx_ret) = crossbeam_channel::bounded(1);
 
-        $self.tx_func.send(CallerFn::$func_camel_case {
+        $self.tx_func.send(Func::$func_camel_case {
             args: ($($arg.into(),)*),
             tx_ret,
         }).unwrap();
@@ -71,14 +71,14 @@ macro_rules! call {
     }};
 }
 
-// Caller의 핸들로, 함수 호출을 요청할 수 있는 핸들입니다.
+// Executor의 핸들로, 함수 호출을 요청할 수 있는 핸들입니다.
 //
 // XingAPI 서버 연결 및 로그인 이벤트의 동기적 처리를 위해 RwLock에 묶여 있습니다.
-pub struct CallerHandle {
-    tx_func: crossbeam_channel::Sender<CallerFn>,
+pub struct ExecutorHandle {
+    tx_func: crossbeam_channel::Sender<Func>,
 }
 
-impl CallerHandle {
+impl ExecutorHandle {
     pub fn connect(
         &self,
         hwnd: usize,
@@ -174,15 +174,15 @@ impl CallerHandle {
 }
 
 // 함수 호출 및 윈도우 메시지 루프를 대신 수행하는 스레드 객체입니다.
-pub struct Caller {
+pub struct Executor {
     join_handle: Option<JoinHandle<()>>,
-    tx_func: crossbeam_channel::Sender<CallerFn>,
+    tx_func: crossbeam_channel::Sender<Func>,
     tx_quit: crossbeam_channel::Sender<()>,
-    handle: RwLock<CallerHandle>,
+    handle: RwLock<ExecutorHandle>,
     entry: AtomicPtr<Entry>,
 }
 
-impl Caller {
+impl Executor {
     pub fn create_window(&self, class_name: &[i8]) -> Result<usize, Win32Error> {
         call!(self, CreateWindow(class_name.to_owned()))
     }
@@ -195,20 +195,20 @@ impl Caller {
         call!(self, UnadviseWindow(hwnd))
     }
 
-    pub fn is_caller_thread() -> bool {
-        std::thread::current().name() == Some("xingapi_caller_thread")
+    pub fn is_executor_thread() -> bool {
+        std::thread::current().name() == Some("xingapi_executor_thread")
     }
 
-    pub fn handle(&self) -> RwLockReadGuard<CallerHandle> {
+    pub fn handle(&self) -> RwLockReadGuard<ExecutorHandle> {
         self.handle.read().unwrap()
     }
 
-    pub fn sync_handle(&self) -> RwLockWriteGuard<CallerHandle> {
+    pub fn sync_handle(&self) -> RwLockWriteGuard<ExecutorHandle> {
         self.handle.write().unwrap()
     }
 
     pub fn entry(&self) -> &Entry {
-        debug_assert!(Caller::is_caller_thread());
+        debug_assert!(Executor::is_executor_thread());
         unsafe { &*self.entry.load(Ordering::Relaxed) }
     }
 
@@ -216,7 +216,7 @@ impl Caller {
         let path = path.map(|s| s.to_owned());
         let (tx_result, rx_result) = crossbeam_channel::bounded(1);
 
-        let (tx_func, rx_func) = crossbeam_channel::unbounded::<CallerFn>();
+        let (tx_func, rx_func) = crossbeam_channel::unbounded::<Func>();
         let (tx_quit, rx_quit) = crossbeam_channel::bounded::<()>(1);
 
         let thread_main = move || {
@@ -273,7 +273,10 @@ impl Caller {
         };
 
         let join_handle = Some(
-            thread::Builder::new().name("xingapi_caller_thread".into()).spawn(thread_main).unwrap(),
+            thread::Builder::new()
+                .name("xingapi_executor_thread".into())
+                .spawn(thread_main)
+                .unwrap(),
         );
 
         let entry = rx_result.recv().unwrap()?;
@@ -282,15 +285,15 @@ impl Caller {
             join_handle,
             tx_func: tx_func.clone(),
             tx_quit,
-            handle: RwLock::new(CallerHandle { tx_func }),
+            handle: RwLock::new(ExecutorHandle { tx_func }),
             entry,
         })
     }
 
-    fn dispatch_func(entry: &Entry, func: CallerFn) {
+    fn dispatch_func(entry: &Entry, func: Func) {
         match func {
             // Win32 API
-            CallerFn::CreateWindow { args: (class_name,), tx_ret } => {
+            Func::CreateWindow { args: (class_name,), tx_ret } => {
                 #[rustfmt::skip]
                 let hwnd = unsafe {
                     CreateWindowExA(
@@ -311,7 +314,7 @@ impl Caller {
                     Err(Win32Error::from_last_error())
                 });
             }
-            CallerFn::DestroyWindow { args: (hwnd,), tx_ret } => {
+            Func::DestroyWindow { args: (hwnd,), tx_ret } => {
                 let _ = tx_ret.try_send(if unsafe { DestroyWindow(hwnd as _) } == TRUE {
                     Ok(())
                 } else {
@@ -320,89 +323,89 @@ impl Caller {
             }
 
             // XingAPI
-            CallerFn::Connect { args: (hwnd, addr, port, timeout, packet_len_limit), tx_ret } => {
+            Func::Connect { args: (hwnd, addr, port, timeout, packet_len_limit), tx_ret } => {
                 let _ =
                     tx_ret.try_send(entry.connect(hwnd, &addr, port, timeout, packet_len_limit));
             }
-            CallerFn::IsConnected { args: (), tx_ret } => {
+            Func::IsConnected { args: (), tx_ret } => {
                 let _ = tx_ret.try_send(entry.is_connected());
             }
-            CallerFn::Disconnect { args: (), tx_ret } => {
+            Func::Disconnect { args: (), tx_ret } => {
                 entry.disconnect();
                 let _ = tx_ret.try_send(());
             }
-            CallerFn::Login { args: (hwnd, id, pw, cert_pw, cert_err_dialog), tx_ret } => {
+            Func::Login { args: (hwnd, id, pw, cert_pw, cert_err_dialog), tx_ret } => {
                 let _ = tx_ret.try_send(entry.login(hwnd, &id, &pw, &cert_pw, cert_err_dialog));
             }
-            CallerFn::Request { args: (hwnd, tr_code, data, continue_key, timeout), tx_ret } => {
+            Func::Request { args: (hwnd, tr_code, data, continue_key, timeout), tx_ret } => {
                 let ret = entry.request(hwnd, &tr_code, &data, continue_key.as_deref(), timeout);
                 let _ = tx_ret.try_send(ret);
             }
-            CallerFn::AdviseRealData { args: (hwnd, tr_code, data), tx_ret } => {
+            Func::AdviseRealData { args: (hwnd, tr_code, data), tx_ret } => {
                 let _ = tx_ret.try_send(entry.advise_real_data(hwnd, &tr_code, &data));
             }
-            CallerFn::UnadviseRealData { args: (hwnd, tr_code, data), tx_ret } => {
+            Func::UnadviseRealData { args: (hwnd, tr_code, data), tx_ret } => {
                 let _ = tx_ret.try_send(entry.unadvise_real_data(hwnd, &tr_code, &data));
             }
-            CallerFn::UnadviseWindow { args: (hwnd,), tx_ret } => {
+            Func::UnadviseWindow { args: (hwnd,), tx_ret } => {
                 let _ = tx_ret.try_send(entry.unadvise_window(hwnd));
             }
-            CallerFn::GetAccountList { args: (), tx_ret } => {
+            Func::GetAccountList { args: (), tx_ret } => {
                 let _ = tx_ret.try_send(entry.get_account_list());
             }
-            CallerFn::GetAccountName { args: (account,), tx_ret } => {
+            Func::GetAccountName { args: (account,), tx_ret } => {
                 let _ = tx_ret.try_send(entry.get_account_name(&account));
             }
-            CallerFn::GetAccountDetailName { args: (account,), tx_ret } => {
+            Func::GetAccountDetailName { args: (account,), tx_ret } => {
                 let _ = tx_ret.try_send(entry.get_account_detail_name(&account));
             }
-            CallerFn::GetAccountNickname { args: (account,), tx_ret } => {
+            Func::GetAccountNickname { args: (account,), tx_ret } => {
                 let _ = tx_ret.try_send(entry.get_account_nickname(&account));
             }
-            CallerFn::GetClientIp { args: (), tx_ret } => {
+            Func::GetClientIp { args: (), tx_ret } => {
                 let _ = tx_ret.try_send(entry.get_client_ip());
             }
-            CallerFn::GetServerName { args: (), tx_ret } => {
+            Func::GetServerName { args: (), tx_ret } => {
                 let _ = tx_ret.try_send(entry.get_server_name());
             }
-            CallerFn::GetApiPath { args: (), tx_ret } => {
+            Func::GetApiPath { args: (), tx_ret } => {
                 let _ = tx_ret.try_send(entry.get_api_path());
             }
-            CallerFn::GetTrCountPerSec { args: (tr_code,), tx_ret } => {
+            Func::GetTrCountPerSec { args: (tr_code,), tx_ret } => {
                 let _ = tx_ret.try_send(entry.get_tr_count_per_sec(&tr_code));
             }
-            CallerFn::GetTrCountBaseSec { args: (tr_code,), tx_ret } => {
+            Func::GetTrCountBaseSec { args: (tr_code,), tx_ret } => {
                 let _ = tx_ret.try_send(entry.get_tr_count_base_sec(&tr_code));
             }
-            CallerFn::GetTrCountRequest { args: (tr_code,), tx_ret } => {
+            Func::GetTrCountRequest { args: (tr_code,), tx_ret } => {
                 let _ = tx_ret.try_send(entry.get_tr_count_request(&tr_code));
             }
-            CallerFn::GetTrCountLimit { args: (tr_code,), tx_ret } => {
+            Func::GetTrCountLimit { args: (tr_code,), tx_ret } => {
                 let _ = tx_ret.try_send(entry.get_tr_count_limit(&tr_code));
             }
         }
     }
 }
 
-impl Drop for Caller {
+impl Drop for Executor {
     fn drop(&mut self) {
         self.tx_quit.try_send(()).unwrap();
         self.join_handle.take().unwrap().join().unwrap();
     }
 }
 
-impl UnwindSafe for Caller {}
-impl RefUnwindSafe for Caller {}
+impl UnwindSafe for Executor {}
+impl RefUnwindSafe for Executor {}
 
 #[cfg(test)]
 mod tests {
-    use super::Caller;
+    use super::Executor;
     use std::sync::Arc;
 
     #[test]
-    fn test_load_caller() {
-        let caller = Arc::new(Caller::new(None).unwrap());
-        println!("api_path: {:?}", caller.handle().get_api_path());
-        assert!(!caller.handle().is_connected());
+    fn test_load_executor() {
+        let executor = Arc::new(Executor::new(None).unwrap());
+        println!("api_path: {:?}", executor.handle().get_api_path());
+        assert!(!executor.handle().is_connected());
     }
 }

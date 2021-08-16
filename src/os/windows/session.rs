@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 
 use super::raw::{XM_DISCONNECT, XM_LOGIN, XM_LOGOUT};
-use super::{caller::Caller, window::Window};
+use super::{executor::Executor, window::Window};
 use crate::error::{Error, Win32Error};
 use crate::response::LoginResponse;
 
@@ -57,17 +57,17 @@ impl WindowData {
 }
 
 pub struct SessionWindow {
-    caller: Arc<Caller>,
+    executor: Arc<Executor>,
     window: Window,
     window_data: AtomicPtr<RwLock<WindowData>>,
 }
 
 impl SessionWindow {
-    pub fn new(caller: Arc<Caller>) -> Result<Self, Win32Error> {
-        let window = Window::new(caller.clone(), &SESSION_WNDCLASS)?;
+    pub fn new(executor: Arc<Executor>) -> Result<Self, Win32Error> {
+        let window = Window::new(executor.clone(), &SESSION_WNDCLASS)?;
         let window_data = WindowData::new(&window);
 
-        Ok(Self { caller, window, window_data })
+        Ok(Self { executor, window, window_data })
     }
 
     pub fn connect(
@@ -77,7 +77,7 @@ impl SessionWindow {
         timeout: Option<i32>,
         packet_len_limit: Option<i32>,
     ) -> Result<(), Error> {
-        self.caller.sync_handle().connect(*self.window, addr, port, timeout, packet_len_limit)
+        self.executor.sync_handle().connect(*self.window, addr, port, timeout, packet_len_limit)
     }
 
     pub fn login(
@@ -87,7 +87,7 @@ impl SessionWindow {
         cert_pw: &str,
         cert_err_dialog: bool,
     ) -> Result<LoginResponse, Error> {
-        let handle = self.caller.sync_handle();
+        let handle = self.executor.sync_handle();
         let window_data = unsafe { &mut *self.window_data.load(Ordering::Relaxed) };
 
         let (tx_res, rx_res) = mpsc::sync_channel(1);
@@ -111,7 +111,7 @@ impl SessionWindow {
         wparam: WPARAM,
         lparam: LPARAM,
     ) -> LRESULT {
-        debug_assert!(Caller::is_caller_thread());
+        debug_assert!(Executor::is_executor_thread());
 
         match msg {
             WM_DESTROY => {

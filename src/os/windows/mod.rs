@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 
-mod caller;
 mod entry;
+mod executor;
 mod raw;
 mod window;
 
@@ -9,7 +9,7 @@ mod query;
 mod real;
 mod session;
 
-use self::{caller::Caller, query::QueryWindow, real::RealWindow, session::SessionWindow};
+use self::{executor::Executor, query::QueryWindow, real::RealWindow, session::SessionWindow};
 use crate::error::{Error, LoadError};
 use crate::response::{LoginResponse, QueryResponse, RealResponse};
 use crate::{data::Data, Account};
@@ -18,7 +18,7 @@ use std::{collections::HashMap, path::Path, sync::Arc, time::Duration};
 use xingapi_res::TrLayout;
 
 pub struct XingApi {
-    caller: Arc<Caller>,
+    executor: Arc<Executor>,
     layout_tbl: Arc<HashMap<String, TrLayout>>,
     session_window: SessionWindow,
     query_window: QueryWindow,
@@ -31,12 +31,12 @@ impl XingApi {
     ) -> Result<Self, LoadError> {
         debug_assert!(!layout_tbl.iter().any(|(k, v)| **k != v.code));
 
-        let caller = Arc::new(Caller::new(path)?);
+        let executor = Arc::new(Executor::new(path)?);
         let layout_tbl = Arc::new(layout_tbl);
-        let session_window = SessionWindow::new(caller.clone())?;
-        let query_window = QueryWindow::new(caller.clone(), layout_tbl.clone())?;
+        let session_window = SessionWindow::new(executor.clone())?;
+        let query_window = QueryWindow::new(executor.clone(), layout_tbl.clone())?;
 
-        Ok(XingApi { caller, layout_tbl, session_window, query_window })
+        Ok(XingApi { executor, layout_tbl, session_window, query_window })
     }
 
     pub fn connect(
@@ -50,11 +50,11 @@ impl XingApi {
     }
 
     pub fn is_connected(&self) -> bool {
-        self.caller.handle().is_connected()
+        self.executor.handle().is_connected()
     }
 
     pub fn disconnect(&self) {
-        self.caller.handle().disconnect()
+        self.executor.handle().disconnect()
     }
 
     pub fn login(
@@ -77,7 +77,7 @@ impl XingApi {
     }
 
     pub fn accounts(&self) -> Vec<Account> {
-        let handle = self.caller.handle();
+        let handle = self.executor.handle();
         let codes = handle.get_account_list();
 
         codes
@@ -92,31 +92,31 @@ impl XingApi {
     }
 
     pub fn client_ip(&self) -> String {
-        self.caller.handle().get_client_ip()
+        self.executor.handle().get_client_ip()
     }
 
     pub fn server_name(&self) -> String {
-        self.caller.handle().get_server_name()
+        self.executor.handle().get_server_name()
     }
 
     pub fn path(&self) -> String {
-        self.caller.handle().get_api_path()
+        self.executor.handle().get_api_path()
     }
 
     pub fn limit_per_one_sec(&self, tr_code: &str) -> i32 {
-        self.caller.handle().get_tr_count_per_sec(tr_code)
+        self.executor.handle().get_tr_count_per_sec(tr_code)
     }
 
     pub fn limit_sec_per_once(&self, tr_code: &str) -> i32 {
-        self.caller.handle().get_tr_count_base_sec(tr_code)
+        self.executor.handle().get_tr_count_base_sec(tr_code)
     }
 
     pub fn count_in_ten_min(&self, tr_code: &str) -> i32 {
-        self.caller.handle().get_tr_count_request(tr_code)
+        self.executor.handle().get_tr_count_request(tr_code)
     }
 
     pub fn limit_per_ten_min(&self, tr_code: &str) -> i32 {
-        self.caller.handle().get_tr_count_limit(tr_code)
+        self.executor.handle().get_tr_count_limit(tr_code)
     }
 }
 
@@ -126,7 +126,7 @@ pub struct Real {
 
 impl Real {
     pub fn new(xingapi: &XingApi) -> Result<Self, LoadError> {
-        Ok(Self { window: RealWindow::new(xingapi.caller.clone(), xingapi.layout_tbl.clone())? })
+        Ok(Self { window: RealWindow::new(xingapi.executor.clone(), xingapi.layout_tbl.clone())? })
     }
 
     pub fn subscribe<T: AsRef<str>>(&self, tr_code: &str, tickers: &[T]) -> Result<(), ()> {

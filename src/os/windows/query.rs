@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 
 use super::raw::{MSG_PACKET, RECV_PACKET, XM_RECEIVE_DATA, XM_TIMEOUT};
-use super::{caller::Caller, window::Window};
+use super::{executor::Executor, window::Window};
 use crate::data::{self, Data, RawData};
 use crate::error::{Error, Win32Error};
 use crate::{euckr, response::QueryResponse};
@@ -65,7 +65,7 @@ impl IncompleteResponse {
 }
 
 struct WindowData {
-    caller: Weak<Caller>,
+    executor: Weak<Executor>,
     tr_layouts: Weak<HashMap<String, TrLayout>>,
     res_tbl: [Option<IncompleteResponse>; 256],
     tx_res_tbl: [Mutex<Option<TxResponse>>; 256],
@@ -74,11 +74,11 @@ struct WindowData {
 impl WindowData {
     fn new(
         window: &Window,
-        caller: &Arc<Caller>,
+        executor: &Arc<Executor>,
         tr_layouts: &Arc<HashMap<String, TrLayout>>,
     ) -> AtomicPtr<Self> {
         let mut data = AtomicPtr::new(Box::into_raw(Box::new(WindowData {
-            caller: Arc::downgrade(caller),
+            executor: Arc::downgrade(executor),
             tr_layouts: Arc::downgrade(tr_layouts),
             res_tbl: array_init(|_| None),
             tx_res_tbl: array_init(|_| Mutex::new(None)),
@@ -93,7 +93,7 @@ impl WindowData {
 }
 
 pub struct QueryWindow {
-    caller: Arc<Caller>,
+    executor: Arc<Executor>,
     tr_layouts: Arc<HashMap<String, TrLayout>>,
     window: Window,
     window_data: AtomicPtr<WindowData>,
@@ -101,13 +101,13 @@ pub struct QueryWindow {
 
 impl QueryWindow {
     pub fn new(
-        caller: Arc<Caller>,
+        executor: Arc<Executor>,
         tr_layouts: Arc<HashMap<String, TrLayout>>,
     ) -> Result<Self, Win32Error> {
-        let window = Window::new(caller.clone(), &QUERY_WNDCLASS)?;
-        let window_data = WindowData::new(&window, &caller, &tr_layouts);
+        let window = Window::new(executor.clone(), &QUERY_WNDCLASS)?;
+        let window_data = WindowData::new(&window, &executor, &tr_layouts);
 
-        Ok(Self { caller, tr_layouts, window, window_data })
+        Ok(Self { executor, tr_layouts, window, window_data })
     }
 
     pub fn request(
@@ -117,7 +117,7 @@ impl QueryWindow {
         timeout: Option<i32>,
     ) -> Result<QueryResponse, Error> {
         let tr_code = &data.code;
-        let req_id = self.caller.handle().request(
+        let req_id = self.executor.handle().request(
             *self.window,
             tr_code,
             data::encode(&self.tr_layouts, data)?,
@@ -154,7 +154,7 @@ impl QueryWindow {
         wparam: WPARAM,
         lparam: LPARAM,
     ) -> LRESULT {
-        debug_assert!(Caller::is_caller_thread());
+        debug_assert!(Executor::is_executor_thread());
 
         match msg {
             WM_DESTROY => {
@@ -171,7 +171,7 @@ impl QueryWindow {
                     &mut *ptr
                 };
 
-                let caller = &*window_data.caller.as_ptr();
+                let executor = &*window_data.executor.as_ptr();
                 let layout_tbl = &*window_data.tr_layouts.as_ptr();
 
                 let req_id = match wparam {
@@ -233,10 +233,10 @@ impl QueryWindow {
                         ))
                         .to_string();
 
-                        caller.entry().release_message_data(lparam);
+                        executor.entry().release_message_data(lparam);
                     }
                     3 => {
-                        caller.entry().release_message_data(lparam);
+                        executor.entry().release_message_data(lparam);
                     }
                     4 => {
                         let res = window_data.res_tbl[req_id].take().unwrap();
@@ -245,7 +245,7 @@ impl QueryWindow {
                         let _ = tx_res.as_ref().unwrap().send(Some(res));
                         *tx_res = None;
 
-                        caller.entry().release_request_data(req_id as _);
+                        executor.entry().release_request_data(req_id as _);
                     }
                     _ => unreachable!(),
                 }

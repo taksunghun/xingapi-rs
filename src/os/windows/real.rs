@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 
 use super::raw::{RECV_REAL_PACKET, XM_RECEIVE_REAL_DATA};
-use super::{caller::Caller, window::Window};
+use super::{executor::Executor, window::Window};
 use crate::data::{self, error::DecodeError};
 use crate::{error::Win32Error, euckr, response::RealResponse};
 
@@ -76,7 +76,7 @@ impl WindowData {
 }
 
 pub struct RealWindow {
-    caller: Arc<Caller>,
+    executor: Arc<Executor>,
     tr_layouts: Arc<HashMap<String, TrLayout>>,
     window: Window,
     _window_data: AtomicPtr<WindowData>,
@@ -85,19 +85,19 @@ pub struct RealWindow {
 
 impl RealWindow {
     pub fn new(
-        caller: Arc<Caller>,
+        executor: Arc<Executor>,
         tr_layouts: Arc<HashMap<String, TrLayout>>,
     ) -> Result<Self, Win32Error> {
-        let window = Window::new(caller.clone(), &REAL_WNDCLASS)?;
+        let window = Window::new(executor.clone(), &REAL_WNDCLASS)?;
 
         let (tx_res, rx_res) = crossbeam_channel::unbounded();
         let _window_data = WindowData::new(&window, tx_res);
 
-        Ok(Self { caller, tr_layouts, window, _window_data, rx_res })
+        Ok(Self { executor, tr_layouts, window, _window_data, rx_res })
     }
 
     pub fn subscribe<T: AsRef<str>>(&self, tr_code: &str, tickers: &[T]) -> Result<(), ()> {
-        self.caller.handle().advise_real_data(
+        self.executor.handle().advise_real_data(
             *self.window,
             tr_code,
             tickers.iter().map(|t| t.as_ref().into()).collect(),
@@ -105,7 +105,7 @@ impl RealWindow {
     }
 
     pub fn unsubscribe<T: AsRef<str>>(&self, tr_code: &str, tickers: &[T]) -> Result<(), ()> {
-        self.caller.handle().unadvise_real_data(
+        self.executor.handle().unadvise_real_data(
             *self.window,
             tr_code,
             tickers.iter().map(|t| t.as_ref().into()).collect(),
@@ -113,7 +113,7 @@ impl RealWindow {
     }
 
     pub fn unsubscribe_all(&self) -> Result<(), ()> {
-        self.caller.unadvise_window(*self.window)
+        self.executor.unadvise_window(*self.window)
     }
 
     pub fn recv(&self) -> RealResponse {
@@ -140,7 +140,7 @@ impl RealWindow {
         wparam: WPARAM,
         lparam: LPARAM,
     ) -> LRESULT {
-        debug_assert!(Caller::is_caller_thread());
+        debug_assert!(Executor::is_executor_thread());
 
         match msg {
             WM_DESTROY => {
@@ -174,6 +174,6 @@ impl RealWindow {
 
 impl Drop for RealWindow {
     fn drop(&mut self) {
-        let _ = self.caller.unadvise_window(*self.window);
+        let _ = self.executor.unadvise_window(*self.window);
     }
 }

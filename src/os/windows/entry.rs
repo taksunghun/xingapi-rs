@@ -3,7 +3,6 @@
 // XingAPI DLL를 불러오고 함수를 직접 호출하는 모듈입니다.
 //
 // XingAPI는 non-thread safe이기 때문에 실제 함수 호출은 단일 스레드에서만 해야 합니다.
-// 따라서 실제 함수 호출을 대신 수행하는 별도의 스레드 객체인 Caller의 구현에 사용합니다.
 
 use crate::error::{EntryError, Error};
 use crate::{euckr, os::windows::raw::XM_OFFSET};
