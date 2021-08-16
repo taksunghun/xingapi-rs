@@ -77,7 +77,7 @@ impl SessionWindow {
         timeout: Option<i32>,
         packet_len_limit: Option<i32>,
     ) -> Result<(), Error> {
-        self.executor.sync_handle().connect(*self.window, addr, port, timeout, packet_len_limit)
+        self.executor.lock_handle().connect(*self.window, addr, port, timeout, packet_len_limit)
     }
 
     pub fn login(
@@ -87,7 +87,7 @@ impl SessionWindow {
         cert_pw: &str,
         cert_err_dialog: bool,
     ) -> Result<LoginResponse, Error> {
-        let handle = self.executor.sync_handle();
+        let handle = self.executor.lock_handle();
         let window_data = unsafe { &mut *self.window_data.load(Ordering::Relaxed) };
 
         let (tx_res, rx_res) = mpsc::sync_channel(1);

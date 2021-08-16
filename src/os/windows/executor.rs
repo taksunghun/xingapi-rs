@@ -203,7 +203,7 @@ impl Executor {
         self.handle.read().unwrap()
     }
 
-    pub fn sync_handle(&self) -> RwLockWriteGuard<ExecutorHandle> {
+    pub fn lock_handle(&self) -> RwLockWriteGuard<ExecutorHandle> {
         self.handle.write().unwrap()
     }
 
