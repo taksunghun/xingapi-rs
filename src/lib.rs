@@ -21,7 +21,7 @@ mod euckr;
 mod os;
 
 use self::data::Data;
-use self::error::{Error, LoadError};
+use self::error::{Error, LoadError, RecvError, RecvTimeoutError, TryRecvError};
 use self::response::{LoginResponse, QueryResponse, RealResponse};
 
 use std::path::{Path, PathBuf};
@@ -316,8 +316,19 @@ impl Real {
         self.0.unsubscribe_all()
     }
 
+    /// 서버로부터 수신받은 실시간 TR을 큐에서 가져오기를 시도합니다.
+    ///
+    /// 큐가 비어 있는 경우 `None`을 반환합니다.
+    pub fn try_recv(&self) -> Result<RealResponse, TryRecvError> {
+        #[cfg(not(windows))]
+        unimplemented!();
+
+        #[cfg(windows)]
+        self.0.try_recv()
+    }
+
     /// 서버로부터 수신받은 실시간 TR을 큐에서 가져올 때까지 기다립니다.
-    pub fn recv(&self) -> RealResponse {
+    pub fn recv(&self) -> Result<RealResponse, RecvError> {
         #[cfg(not(windows))]
         unimplemented!();
 
@@ -328,22 +339,11 @@ impl Real {
     /// 지정된 시간 동안 서버로부터 수신받은 실시간 TR을 큐에서 가져올 때까지 기다립니다.
     ///
     /// 시간 초과가 발생하는 경우 `None`을 반환합니다.
-    pub fn recv_timeout(&self, timeout: Duration) -> Option<RealResponse> {
+    pub fn recv_timeout(&self, timeout: Duration) -> Result<RealResponse, RecvTimeoutError> {
         #[cfg(not(windows))]
         unimplemented!();
 
         #[cfg(windows)]
         self.0.recv_timeout(timeout)
-    }
-
-    /// 서버로부터 수신받은 실시간 TR을 큐에서 가져오기를 시도합니다.
-    ///
-    /// 큐가 비어 있는 경우 `None`을 반환합니다.
-    pub fn try_recv(&self) -> Option<RealResponse> {
-        #[cfg(not(windows))]
-        unimplemented!();
-
-        #[cfg(windows)]
-        self.0.try_recv()
     }
 }

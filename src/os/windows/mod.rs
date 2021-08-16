@@ -10,7 +10,7 @@ mod real;
 mod session;
 
 use self::{executor::Executor, query::QueryWindow, real::RealWindow, session::SessionWindow};
-use crate::error::{Error, LoadError};
+use crate::error::{Error, LoadError, RecvError, RecvTimeoutError, TryRecvError};
 use crate::response::{LoginResponse, QueryResponse, RealResponse};
 use crate::{data::Data, Account};
 
@@ -141,15 +141,15 @@ impl Real {
         self.window.unsubscribe_all()
     }
 
-    pub fn recv(&self) -> RealResponse {
+    pub fn try_recv(&self) -> Result<RealResponse, TryRecvError> {
+        self.window.try_recv()
+    }
+
+    pub fn recv(&self) -> Result<RealResponse, RecvError> {
         self.window.recv()
     }
 
-    pub fn recv_timeout(&self, timeout: Duration) -> Option<RealResponse> {
+    pub fn recv_timeout(&self, timeout: Duration) -> Result<RealResponse, RecvTimeoutError> {
         self.window.recv_timeout(timeout)
-    }
-
-    pub fn try_recv(&self) -> Option<RealResponse> {
-        self.window.try_recv()
     }
 }

@@ -3,7 +3,8 @@
 use super::raw::{RECV_REAL_PACKET, XM_RECEIVE_REAL_DATA};
 use super::{executor::Executor, window::Window};
 use crate::data::{self, error::DecodeError};
-use crate::{error::Win32Error, euckr, response::RealResponse};
+use crate::error::{RecvError, RecvTimeoutError, TryRecvError, Win32Error};
+use crate::{euckr, response::RealResponse};
 
 use crossbeam_channel::{Receiver, Sender};
 use lazy_static::lazy_static;
@@ -116,22 +117,16 @@ impl RealWindow {
         self.executor.unadvise_window(*self.window)
     }
 
-    pub fn recv(&self) -> RealResponse {
-        let res = self.rx_res.recv().unwrap();
-        res.into_real_res(&self.tr_layouts)
+    pub fn try_recv(&self) -> Result<RealResponse, TryRecvError> {
+        Ok(self.rx_res.try_recv()?.into_real_res(&self.tr_layouts))
     }
 
-    pub fn recv_timeout(&self, timeout: Duration) -> Option<RealResponse> {
-        let res = self.rx_res.recv_timeout(timeout).ok()?;
-        Some(res.into_real_res(&self.tr_layouts))
+    pub fn recv(&self) -> Result<RealResponse, RecvError> {
+        Ok(self.rx_res.recv()?.into_real_res(&self.tr_layouts))
     }
 
-    pub fn try_recv(&self) -> Option<RealResponse> {
-        if let Ok(res) = self.rx_res.try_recv() {
-            Some(res.into_real_res(&self.tr_layouts))
-        } else {
-            None
-        }
+    pub fn recv_timeout(&self, timeout: Duration) -> Result<RealResponse, RecvTimeoutError> {
+        Ok(self.rx_res.recv_timeout(timeout)?.into_real_res(&self.tr_layouts))
     }
 
     unsafe extern "system" fn wndproc(
@@ -175,5 +170,29 @@ impl RealWindow {
 impl Drop for RealWindow {
     fn drop(&mut self) {
         let _ = self.executor.unadvise_window(*self.window);
+    }
+}
+
+impl From<crossbeam_channel::TryRecvError> for TryRecvError {
+    fn from(err: crossbeam_channel::TryRecvError) -> Self {
+        match err {
+            crossbeam_channel::TryRecvError::Empty => Self::Empty,
+            crossbeam_channel::TryRecvError::Disconnected => Self::Disconnected,
+        }
+    }
+}
+
+impl From<crossbeam_channel::RecvError> for RecvError {
+    fn from(_: crossbeam_channel::RecvError) -> Self {
+        Self
+    }
+}
+
+impl From<crossbeam_channel::RecvTimeoutError> for RecvTimeoutError {
+    fn from(err: crossbeam_channel::RecvTimeoutError) -> Self {
+        match err {
+            crossbeam_channel::RecvTimeoutError::Timeout => Self::Timeout,
+            crossbeam_channel::RecvTimeoutError::Disconnected => Self::Disconnected,
+        }
     }
 }

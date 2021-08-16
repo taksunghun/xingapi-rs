@@ -96,7 +96,7 @@ fn main() {
     println!("registered: tr_code: {}, market: {}, ticker: {}", tr_code, market, code);
 
     while !QUIT.load(Ordering::Relaxed) {
-        if let Some(res) = real.recv_timeout(Duration::from_millis(10)) {
+        if let Ok(res) = real.recv_timeout(Duration::from_millis(10)) {
             let data = res.data().unwrap();
             let cvolume = data.blocks["OutBlock"]["cvolume"].parse::<u32>().unwrap();
             println!("real response: {}", cvolume);
