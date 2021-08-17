@@ -309,7 +309,7 @@ impl Executor {
                 };
 
                 let _ = tx_ret.try_send(if !hwnd.is_null() {
-                    Ok(hwnd as usize)
+                    Ok(hwnd as _)
                 } else {
                     Err(Win32Error::from_last_error())
                 });

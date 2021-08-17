@@ -50,7 +50,7 @@ pub fn load_from_path<P: AsRef<Path>>(path: P) -> Result<HashMap<String, TrLayou
 
         if let Some(other) = layout_tbl.get(&layout.code) {
             if layout != *other {
-                return Err(LoadError::Confilict(layout.code.into()));
+                return Err(LoadError::Confilict(layout.code));
             }
         } else {
             layout_tbl.insert(layout.code.to_owned(), layout);

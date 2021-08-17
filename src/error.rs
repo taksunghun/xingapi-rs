@@ -365,14 +365,13 @@ fn format_message(code: u32) -> String {
             message.as_ptr() as *const _,
             code,
             0,
-            &mut buf as *mut *mut u16 as _,
+            &mut buf as *mut *mut _ as _,
             0,
             std::ptr::null_mut(),
         );
         assert_ne!(buf_len, 0);
 
-        let message =
-            String::from_utf16(std::slice::from_raw_parts(buf, buf_len as usize)).unwrap();
+        let message = String::from_utf16(std::slice::from_raw_parts(buf, buf_len as _)).unwrap();
         LocalFree(buf as *mut _);
 
         message

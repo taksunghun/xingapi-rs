@@ -26,13 +26,13 @@ fn main() {
     println!("login: {:?}", login);
     assert!(login.is_ok());
 
-    let t1101_one_sec_limit = xingapi.limit_per_one_sec("t1101") as u64;
-    let t1101_ten_min_limit = xingapi.limit_per_ten_min("t1101") as u64;
+    let t1101_one_sec_limit = xingapi.limit_per_one_sec("t1101");
+    let t1101_ten_min_limit = xingapi.limit_per_ten_min("t1101");
     println!("t1101 one_sec_limit: {}", t1101_one_sec_limit);
     println!("t1101 ten_min_limit: {}", t1101_ten_min_limit);
 
-    let t1764_one_sec_limit = xingapi.limit_per_one_sec("t1764") as u64;
-    let t1764_ten_min_limit = xingapi.limit_per_ten_min("t1764") as u64;
+    let t1764_one_sec_limit = xingapi.limit_per_one_sec("t1764");
+    let t1764_ten_min_limit = xingapi.limit_per_ten_min("t1764");
     println!("t1764 one_sec_limit: {}", t1764_one_sec_limit);
     println!("t1764 ten_min_limit: {}", t1764_ten_min_limit);
 

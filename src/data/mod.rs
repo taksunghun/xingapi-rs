@@ -254,8 +254,8 @@ pub(crate) fn decode_non_block(tr_layout: &TrLayout, raw_data: &[u8]) -> Result<
             }
 
             let block_count =
-                str::parse::<u32>(euckr::decode(&raw_data[offset..offset + 5]).as_ref())
-                    .map_err(|_| DecodeError::DecodeLength)? as usize;
+                str::parse::<usize>(euckr::decode(&raw_data[offset..offset + 5]).as_ref())
+                    .map_err(|_| DecodeError::DecodeLength)?;
             offset += 5;
 
             if offset + block_layout.len * block_count > raw_data.len() {

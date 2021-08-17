@@ -29,7 +29,7 @@ lazy_static! {
 
         unsafe {
             RegisterClassExA(&WNDCLASSEXA {
-                cbSize: std::mem::size_of::<WNDCLASSEXA>() as UINT,
+                cbSize: std::mem::size_of::<WNDCLASSEXA>() as _,
                 lpfnWndProc: Some(QueryWindow::wndproc),
                 cbWndExtra: std::mem::size_of::<usize>() as _,
                 hInstance: GetModuleHandleA(std::ptr::null()),
