@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 
+//! 실시간 TR 관련 모듈입니다.
+
 use crate::XingApi;
 use crate::{response::RealResponse, LoadError};
 
@@ -11,11 +13,11 @@ use crate::os::windows as imp;
 
 /// 실시간 TR를 수신하는 리시버입니다.
 ///
-/// `connect()`, `disconnect()`, `login()`과 같은 연결 및 로그인 함수를 호출하면 기존에 등록된
-/// TR은 모두 사라지게 됩니다.
+/// `connect()`, `disconnect()`, `login()`과 같은 연결 및 로그인 함수를 호출하면 기존에 등록된 TR은
+/// 모두 사라지게 됩니다.
 ///
-/// 실시간 TR을 등록하면 수신받은 TR은 내부적으로 큐에 저장되며 이를 처리하지 않을 경우 메모리
-/// 누수로 이어집니다. 따라서 `Real::recv()`를 호출하여 수신받은 TR을 반드시 처리해야 합니다.
+/// 실시간 TR을 등록한 경우 수신받은 응답은 채널로 송신하게 되며 이를 처리하지 않을 경우 메모리
+/// 누수로 이어집니다. 따라서 채널로 수신받아 TR을 반드시 처리해야 합니다.
 #[cfg(any(windows, doc))]
 #[cfg_attr(doc_cfg, doc(cfg(windows)))]
 pub struct Real(#[cfg(windows)] imp::Real, Arc<XingApi>);
@@ -33,7 +35,7 @@ impl Real {
 
     /// 실시간 TR을 지정된 종목 코드로 등록합니다.
     ///
-    /// `data`는 종목 코드 목록이며 종목 코드는 ASCII 문자로만 구성되어야 합니다.
+    /// `tickers`는 종목 코드 목록이며 종목 코드는 ASCII 문자로만 구성되어야 합니다.
     pub fn subscribe<T: AsRef<str>>(
         &self,
         tr_code: &str,
@@ -48,7 +50,7 @@ impl Real {
 
     /// 실시간 TR을 지정된 종목 코드로 등록 해제합니다.
     ///
-    /// `data`는 종목 코드 목록이며 종목 코드는 ASCII 문자로만 구성되어야 합니다.
+    /// `tickers`는 종목 코드 목록이며 종목 코드는 ASCII 문자로만 구성되어야 합니다.
     pub fn unsubscribe<T: AsRef<str>>(
         &self,
         tr_code: &str,
