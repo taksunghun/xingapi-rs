@@ -54,6 +54,11 @@ impl Block {
         matches!(self, Self::Block(_))
     }
 
+    /// 배열 블록인지에 대한 여부를 반환합니다.
+    pub fn is_array(&self) -> bool {
+        matches!(self, Self::Array(_))
+    }
+
     /// 단일 블록인 경우 값에 대한 참조자를 반환힙니다.
     pub fn as_block(&self) -> Option<&HashMap<String, String>> {
         match self {
@@ -68,11 +73,6 @@ impl Block {
             Self::Block(block) => Some(block),
             _ => None,
         }
-    }
-
-    /// 배열 블록인지에 대한 여부를 반환합니다.
-    pub fn is_array(&self) -> bool {
-        matches!(self, Self::Array(_))
     }
 
     /// 배열 블록인 경우 값에 대한 참조자를 반환합니다.
