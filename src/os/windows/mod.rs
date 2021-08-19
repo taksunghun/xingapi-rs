@@ -10,7 +10,8 @@ mod real;
 mod session;
 
 use self::{executor::Executor, query::QueryWindow, real::RealWindow, session::SessionWindow};
-use crate::error::{Error, LoadError, RecvError, RecvTimeoutError, TryRecvError};
+use crate::error::{Error, LoadError};
+use crate::real::{RecvError, RecvTimeoutError, TryRecvError};
 use crate::response::{LoginResponse, QueryResponse, RealResponse};
 use crate::{data::Data, Account};
 

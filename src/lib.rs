@@ -15,17 +15,18 @@
 
 pub mod data;
 pub mod error;
+pub mod real;
 pub mod response;
 
 mod euckr;
 mod os;
 
 use self::data::Data;
-use self::error::{Error, LoadError, RecvError, RecvTimeoutError, TryRecvError};
-use self::response::{LoginResponse, QueryResponse, RealResponse};
+use self::error::{Error, LoadError};
+use self::response::{LoginResponse, QueryResponse};
 
 use std::path::{Path, PathBuf};
-use std::{sync::Arc, time::Duration};
+use std::sync::Arc;
 
 use xingapi_res::TrLayout;
 
@@ -260,90 +261,5 @@ impl XingApi {
 
         #[cfg(windows)]
         self.0.limit_per_ten_min(tr_code)
-    }
-}
-
-/// 실시간 TR를 수신하는 리시버입니다.
-///
-/// `connect()`, `disconnect()`, `login()`과 같은 연결 및 로그인 함수를 호출하면 기존에 등록된
-/// TR은 모두 사라지게 됩니다.
-///
-/// 실시간 TR을 등록하면 수신받은 TR은 내부적으로 큐에 저장되며 이를 처리하지 않을 경우 메모리
-/// 누수로 이어집니다. 따라서 `Real::recv()`를 호출하여 수신받은 TR을 반드시 처리해야 합니다.
-#[cfg(any(windows, doc))]
-#[cfg_attr(doc_cfg, doc(cfg(windows)))]
-pub struct Real(#[cfg(windows)] imp::Real, Arc<XingApi>);
-
-#[cfg(any(windows, doc))]
-impl Real {
-    /// 실시간 TR을 수신하는 객체를 생성합니다.
-    pub fn new(xingapi: Arc<XingApi>) -> Result<Self, LoadError> {
-        #[cfg(not(windows))]
-        unimplemented!();
-
-        #[cfg(windows)]
-        Ok(Self(imp::Real::new(&xingapi.0)?, xingapi))
-    }
-
-    /// 실시간 TR을 지정된 종목 코드로 등록합니다.
-    ///
-    /// `data`는 종목 코드 목록이며 종목 코드는 ASCII 문자로만 구성되어야 합니다.
-    pub fn subscribe<T: AsRef<str>>(&self, tr_code: &str, tickers: &[T]) -> Result<(), ()> {
-        #[cfg(not(windows))]
-        unimplemented!();
-
-        #[cfg(windows)]
-        self.0.subscribe(tr_code, tickers)
-    }
-
-    /// 실시간 TR을 지정된 종목 코드로 등록 해제합니다.
-    ///
-    /// `data`는 종목 코드 목록이며 종목 코드는 ASCII 문자로만 구성되어야 합니다.
-    pub fn unsubscribe<T: AsRef<str>>(&self, tr_code: &str, tickers: &[T]) -> Result<(), ()> {
-        #[cfg(not(windows))]
-        unimplemented!();
-
-        #[cfg(windows)]
-        self.0.unsubscribe(tr_code, tickers)
-    }
-
-    /// 실시간 TR을 모두 등록 해제합니다.
-    pub fn unsubscribe_all(&self) -> Result<(), ()> {
-        #[cfg(not(windows))]
-        unimplemented!();
-
-        #[cfg(windows)]
-        self.0.unsubscribe_all()
-    }
-
-    /// 서버로부터 수신받은 실시간 TR을 큐에서 가져오기를 시도합니다.
-    ///
-    /// 큐가 비어 있는 경우 `None`을 반환합니다.
-    pub fn try_recv(&self) -> Result<RealResponse, TryRecvError> {
-        #[cfg(not(windows))]
-        unimplemented!();
-
-        #[cfg(windows)]
-        self.0.try_recv()
-    }
-
-    /// 서버로부터 수신받은 실시간 TR을 큐에서 가져올 때까지 기다립니다.
-    pub fn recv(&self) -> Result<RealResponse, RecvError> {
-        #[cfg(not(windows))]
-        unimplemented!();
-
-        #[cfg(windows)]
-        self.0.recv()
-    }
-
-    /// 지정된 시간 동안 서버로부터 수신받은 실시간 TR을 큐에서 가져올 때까지 기다립니다.
-    ///
-    /// 시간 초과가 발생하는 경우 `None`을 반환합니다.
-    pub fn recv_timeout(&self, timeout: Duration) -> Result<RealResponse, RecvTimeoutError> {
-        #[cfg(not(windows))]
-        unimplemented!();
-
-        #[cfg(windows)]
-        self.0.recv_timeout(timeout)
     }
 }

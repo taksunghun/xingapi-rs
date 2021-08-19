@@ -125,63 +125,6 @@ impl std::error::Error for Error {
 }
 
 #[derive(Debug)]
-pub enum TryRecvError {
-    Empty,
-    Disconnected,
-}
-
-impl std::fmt::Display for TryRecvError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match *self {
-            Self::Empty => "receiving on an empty channel".fmt(f),
-            Self::Disconnected => "receiving on an empty and disconnected channel".fmt(f),
-        }
-    }
-}
-
-impl std::error::Error for TryRecvError {}
-
-impl From<RecvError> for TryRecvError {
-    fn from(_: RecvError) -> Self {
-        Self::Disconnected
-    }
-}
-
-#[derive(Debug)]
-pub struct RecvError;
-
-impl std::fmt::Display for RecvError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        "receiving on an empty and disconnected channel".fmt(f)
-    }
-}
-
-impl std::error::Error for RecvError {}
-
-#[derive(Debug)]
-pub enum RecvTimeoutError {
-    Timeout,
-    Disconnected,
-}
-
-impl std::fmt::Display for RecvTimeoutError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match *self {
-            RecvTimeoutError::Timeout => "timed out waiting on receive operation".fmt(f),
-            RecvTimeoutError::Disconnected => "channel is empty and disconnected".fmt(f),
-        }
-    }
-}
-
-impl std::error::Error for RecvTimeoutError {}
-
-impl From<RecvError> for RecvTimeoutError {
-    fn from(_: RecvError) -> Self {
-        Self::Disconnected
-    }
-}
-
-#[derive(Debug)]
 pub enum LoadError {
     /// TR 레이아웃 파싱 오류
     Layout(xingapi_res::LoadError),
