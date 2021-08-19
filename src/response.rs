@@ -5,9 +5,10 @@
 use crate::data::{Data, DecodeError};
 
 use std::time::Duration;
+use std::fmt::{self, Display, Debug};
 
 /// 응답 메시지에 대한 트레이트입니다.
-pub trait Response: std::fmt::Display {
+pub trait Response: Display {
     /// 4자리 이상의 응답 코드를 반환합니다. 응답 메시지가 없는 경우 빈 문자열을 반환합니다.
     ///
     /// `0000`-`0999`: 정상, `1000`-`7999`: 업무 오류, `8000`-`9999`: 시스템 오류
@@ -54,9 +55,9 @@ impl Response for LoginResponse {
     }
 }
 
-impl std::fmt::Display for LoginResponse {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        std::fmt::Debug::fmt(self, f)
+impl Display for LoginResponse {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        Debug::fmt(self, f)
     }
 }
 
@@ -121,9 +122,9 @@ impl Response for QueryResponse {
     }
 }
 
-impl std::fmt::Display for QueryResponse {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        std::fmt::Debug::fmt(self, f)
+impl Display for QueryResponse {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        Debug::fmt(self, f)
     }
 }
 
@@ -150,8 +151,8 @@ impl RealResponse {
     }
 }
 
-impl std::fmt::Display for RealResponse {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        std::fmt::Debug::fmt(self, f)
+impl Display for RealResponse {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        Debug::fmt(self, f)
     }
 }
