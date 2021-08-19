@@ -1,4 +1,4 @@
 // SPDX-License-Identifier: MPL-2.0
 
-#[cfg(target_os = "windows")]
+#[cfg(windows)]
 pub mod windows;

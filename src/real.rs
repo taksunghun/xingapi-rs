@@ -9,7 +9,7 @@ use crate::{response::RealResponse, LoadError};
 use std::fmt::{self, Display};
 use std::{sync::Arc, time::Duration};
 
-#[cfg(target_os = "windows")]
+#[cfg(windows)]
 use crate::os::windows as imp;
 
 /// 실시간 TR를 수신하는 리시버입니다.

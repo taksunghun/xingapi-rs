@@ -28,7 +28,7 @@ use std::sync::Arc;
 
 use xingapi_res::TrLayout;
 
-#[cfg(target_os = "windows")]
+#[cfg(windows)]
 use os::windows as imp;
 
 #[cfg(feature = "serde")]
