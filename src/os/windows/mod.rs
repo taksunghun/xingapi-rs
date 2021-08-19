@@ -10,10 +10,10 @@ mod real;
 mod session;
 
 use self::{executor::Executor, query::QueryWindow, real::RealWindow, session::SessionWindow};
-use crate::error::{Error, LoadError};
 use crate::real::{RecvError, RecvTimeoutError, TryRecvError};
 use crate::response::{LoginResponse, QueryResponse, RealResponse};
 use crate::{data::Data, Account};
+use crate::{Error, LoadError};
 
 use std::{collections::HashMap, path::Path, sync::Arc, time::Duration};
 use xingapi_res::TrLayout;

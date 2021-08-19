@@ -4,7 +4,7 @@
 // 윈도우 메시지 루프를 반복하는 스레드에 대한 모듈입니다.
 
 use super::entry::Entry;
-use crate::error::{EntryError, Error, Win32Error};
+use crate::{EntryError, Error, Win32Error};
 
 use std::panic::{RefUnwindSafe, UnwindSafe};
 use std::sync::atomic::{AtomicPtr, Ordering};

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 
 use super::executor::Executor;
-use crate::error::Win32Error;
+use crate::Win32Error;
 
 use std::{ops::Deref, sync::Arc};
 

@@ -2,8 +2,8 @@
 
 use super::raw::{XM_DISCONNECT, XM_LOGIN, XM_LOGOUT};
 use super::{executor::Executor, window::Window};
-use crate::error::{Error, Win32Error};
 use crate::response::LoginResponse;
+use crate::{Error, Win32Error};
 
 use encoding_rs::EUC_KR;
 use lazy_static::lazy_static;

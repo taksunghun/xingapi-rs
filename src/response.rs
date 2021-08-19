@@ -14,7 +14,7 @@
 //! use xingapi::response::Message;
 //! ```
 
-use crate::{data::Data, error::DecodeError};
+use crate::data::{Data, DecodeError};
 
 use std::time::Duration;
 

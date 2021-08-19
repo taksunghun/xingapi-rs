@@ -4,8 +4,8 @@
 //
 // XingAPI는 non-thread safe이기 때문에 실제 함수 호출은 단일 스레드에서만 해야 합니다.
 
-use crate::error::{EntryError, Error};
 use crate::{euckr, os::windows::raw::XM_OFFSET};
+use crate::{EntryError, Error};
 
 use libloading::os::windows::{Library, Symbol};
 use std::path::Path;

@@ -3,8 +3,8 @@
 use super::raw::{MSG_PACKET, RECV_PACKET, XM_RECEIVE_DATA, XM_TIMEOUT};
 use super::{executor::Executor, window::Window};
 use crate::data::{self, Data, RawData};
-use crate::error::{Error, Win32Error};
 use crate::{euckr, response::QueryResponse};
+use crate::{Error, Win32Error};
 
 use array_init::array_init;
 use lazy_static::lazy_static;

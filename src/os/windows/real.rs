@@ -3,9 +3,8 @@
 use super::raw::{RECV_REAL_PACKET, XM_RECEIVE_REAL_DATA};
 use super::{executor::Executor, window::Window};
 use crate::data::{self, DecodeError};
-use crate::error::Win32Error;
 use crate::real::{RecvError, RecvTimeoutError, TryRecvError};
-use crate::{euckr, response::RealResponse};
+use crate::{euckr, response::RealResponse, Win32Error};
 
 use crossbeam_channel::{Receiver, Sender};
 use lazy_static::lazy_static;
