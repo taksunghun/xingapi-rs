@@ -2,7 +2,7 @@
 
 //! 일반적인 에러 모듈입니다.
 
-pub use crate::data::error::{DecodeError, EncodeError};
+pub use crate::data::{DecodeError, EncodeError};
 
 use std::path::PathBuf;
 

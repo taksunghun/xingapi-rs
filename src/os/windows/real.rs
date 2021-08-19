@@ -2,7 +2,7 @@
 
 use super::raw::{RECV_REAL_PACKET, XM_RECEIVE_REAL_DATA};
 use super::{executor::Executor, window::Window};
-use crate::data::{self, error::DecodeError};
+use crate::data::{self, DecodeError};
 use crate::error::Win32Error;
 use crate::real::{RecvError, RecvTimeoutError, TryRecvError};
 use crate::{euckr, response::RealResponse};
