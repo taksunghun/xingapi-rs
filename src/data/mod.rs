@@ -21,7 +21,7 @@ use serde::{Deserialize, Serialize};
 /// ```rust
 /// use std::collections::HashMap;
 ///
-/// let block : HashMap<String, String> = hashmap! {
+/// let block: HashMap<String, String> = hashmap! {
 ///     "shcode" => "096530",
 ///     "gubun" => "0",
 /// };
