@@ -10,7 +10,7 @@ mod real;
 mod session;
 
 use self::{executor::Executor, query::QueryWindow, real::RealWindow, session::SessionWindow};
-use crate::real::{RecvError, RecvTimeoutError, TryRecvError};
+use crate::real::{RecvError, RecvTimeoutError, SubscribeError, TryRecvError, UnsubscribeError};
 use crate::response::{LoginResponse, QueryResponse, RealResponse};
 use crate::{data::Data, Account};
 use crate::{Error, LoadError};
@@ -130,15 +130,23 @@ impl Real {
         Ok(Self { window: RealWindow::new(xingapi.executor.clone(), xingapi.layout_tbl.clone())? })
     }
 
-    pub fn subscribe<T: AsRef<str>>(&self, tr_code: &str, tickers: &[T]) -> Result<(), ()> {
+    pub fn subscribe<T: AsRef<str>>(
+        &self,
+        tr_code: &str,
+        tickers: &[T],
+    ) -> Result<(), SubscribeError> {
         self.window.subscribe(tr_code, tickers)
     }
 
-    pub fn unsubscribe<T: AsRef<str>>(&self, tr_code: &str, tickers: &[T]) -> Result<(), ()> {
+    pub fn unsubscribe<T: AsRef<str>>(
+        &self,
+        tr_code: &str,
+        tickers: &[T],
+    ) -> Result<(), UnsubscribeError> {
         self.window.unsubscribe(tr_code, tickers)
     }
 
-    pub fn unsubscribe_all(&self) -> Result<(), ()> {
+    pub fn unsubscribe_all(&self) -> Result<(), UnsubscribeError> {
         self.window.unsubscribe_all()
     }
 

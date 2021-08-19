@@ -3,6 +3,7 @@
 use crate::XingApi;
 use crate::{response::RealResponse, LoadError};
 
+use std::fmt::{self, Display};
 use std::{sync::Arc, time::Duration};
 
 #[cfg(target_os = "windows")]
@@ -33,7 +34,11 @@ impl Real {
     /// 실시간 TR을 지정된 종목 코드로 등록합니다.
     ///
     /// `data`는 종목 코드 목록이며 종목 코드는 ASCII 문자로만 구성되어야 합니다.
-    pub fn subscribe<T: AsRef<str>>(&self, tr_code: &str, tickers: &[T]) -> Result<(), ()> {
+    pub fn subscribe<T: AsRef<str>>(
+        &self,
+        tr_code: &str,
+        tickers: &[T],
+    ) -> Result<(), SubscribeError> {
         #[cfg(not(windows))]
         unimplemented!();
 
@@ -44,7 +49,11 @@ impl Real {
     /// 실시간 TR을 지정된 종목 코드로 등록 해제합니다.
     ///
     /// `data`는 종목 코드 목록이며 종목 코드는 ASCII 문자로만 구성되어야 합니다.
-    pub fn unsubscribe<T: AsRef<str>>(&self, tr_code: &str, tickers: &[T]) -> Result<(), ()> {
+    pub fn unsubscribe<T: AsRef<str>>(
+        &self,
+        tr_code: &str,
+        tickers: &[T],
+    ) -> Result<(), UnsubscribeError> {
         #[cfg(not(windows))]
         unimplemented!();
 
@@ -53,7 +62,7 @@ impl Real {
     }
 
     /// 실시간 TR을 모두 등록 해제합니다.
-    pub fn unsubscribe_all(&self) -> Result<(), ()> {
+    pub fn unsubscribe_all(&self) -> Result<(), UnsubscribeError> {
         #[cfg(not(windows))]
         unimplemented!();
 
@@ -88,6 +97,30 @@ impl Real {
         self.0.recv_timeout(timeout)
     }
 }
+
+/// 실시간 TR에 대한 등록 요청이 실패하면 발생하는 에러입니다.
+#[derive(Debug)]
+pub struct SubscribeError;
+
+impl Display for SubscribeError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        "unable to subscribe TR".fmt(f)
+    }
+}
+
+impl std::error::Error for SubscribeError {}
+
+/// 실시간 TR에 대한 등록 해제 요청이 실패하면 발생하는 에러입니다.
+#[derive(Debug)]
+pub struct UnsubscribeError;
+
+impl Display for UnsubscribeError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        "unable to unsubscribe TR".fmt(f)
+    }
+}
+
+impl std::error::Error for UnsubscribeError {}
 
 #[derive(Debug)]
 pub enum TryRecvError {

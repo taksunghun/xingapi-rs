@@ -306,65 +306,46 @@ impl Entry {
         unsafe { (self.release_message_data)(lparam) }
     }
 
-    pub fn advise_real_data(&self, hwnd: usize, tr_code: &str, data: &[String]) -> Result<(), ()> {
+    pub fn advise_real_data(&self, hwnd: usize, tr_code: &str, data: &[String]) -> bool {
         if data.iter().any(|s| !s.is_ascii() || s.contains('\0')) {
-            return Err(());
+            return false;
         }
 
         let max_len = data.iter().map(|s| s.len()).max().unwrap_or(0);
         let enc_data: String = data.iter().map(|s| format!("{:0>1$}", s, max_len)).collect();
 
         unsafe {
-            if (self.advise_real_data)(
+            (self.advise_real_data)(
                 hwnd as _,
                 euckr::encode(tr_code).as_ptr(),
                 euckr::encode(&enc_data).as_ptr(),
                 max_len as _,
             ) == TRUE
-            {
-                Ok(())
-            } else {
-                Err(())
-            }
         }
     }
 
-    pub fn unadvise_real_data(
-        &self,
-        hwnd: usize,
-        tr_code: &str,
-        data: &[String],
-    ) -> Result<(), ()> {
+    pub fn unadvise_real_data(&self, hwnd: usize, tr_code: &str, data: &[String]) -> bool {
         if data.iter().any(|s| !s.is_ascii() || s.contains('\0')) {
-            return Err(());
+            return false;
         }
 
         let max_len = data.iter().map(|s| s.len()).max().unwrap_or(0);
         let enc_data: String = data.iter().map(|s| format!("{:0>1$}", s, max_len)).collect();
 
         unsafe {
-            if (self.unadvise_real_data)(
+            (self.unadvise_real_data)(
                 hwnd as _,
                 euckr::encode(tr_code).as_ptr(),
                 euckr::encode(&enc_data).as_ptr(),
                 max_len as _,
             ) == TRUE
-            {
-                Ok(())
-            } else {
-                Err(())
-            }
         }
     }
 
-    pub fn unadvise_window(&self, hwnd: usize) -> Result<(), ()> {
+    pub fn unadvise_window(&self, hwnd: usize) -> bool {
         unsafe {
             // 반환형은 BOOL이지만 에러 코드를 반환하기도 합니다.
-            if (self.unadvise_window)(hwnd as _) > 0 {
-                Ok(())
-            } else {
-                Err(())
-            }
+            (self.unadvise_window)(hwnd as _) > 0
         }
     }
 

@@ -42,9 +42,9 @@ define_fn! {
     Disconnect() -> ()
     Login(usize, String, String, String, bool) -> Result<(), Error>
     Request(usize, String, Vec<u8>, Option<String>, Option<i32>) -> Result<i32, Error>
-    AdviseRealData(usize, String, Vec<String>) -> Result<(), ()>
-    UnadviseRealData(usize, String, Vec<String>) -> Result<(), ()>
-    UnadviseWindow(usize) -> Result<(), ()>
+    AdviseRealData(usize, String, Vec<String>) -> bool
+    UnadviseRealData(usize, String, Vec<String>) -> bool
+    UnadviseWindow(usize) -> bool
     GetAccountList() -> Vec<String>
     GetAccountName(String) -> String
     GetAccountDetailName(String) -> String
@@ -120,21 +120,11 @@ impl ExecutorHandle {
         call!(self, Request(hwnd, tr_code, data, continue_key, timeout))
     }
 
-    pub fn advise_real_data(
-        &self,
-        hwnd: usize,
-        tr_code: &str,
-        data: Vec<String>,
-    ) -> Result<(), ()> {
+    pub fn advise_real_data(&self, hwnd: usize, tr_code: &str, data: Vec<String>) -> bool {
         call!(self, AdviseRealData(hwnd, tr_code, data))
     }
 
-    pub fn unadvise_real_data(
-        &self,
-        hwnd: usize,
-        tr_code: &str,
-        data: Vec<String>,
-    ) -> Result<(), ()> {
+    pub fn unadvise_real_data(&self, hwnd: usize, tr_code: &str, data: Vec<String>) -> bool {
         call!(self, UnadviseRealData(hwnd, tr_code, data))
     }
 
@@ -191,7 +181,7 @@ impl Executor {
         call!(self, DestroyWindow(hwnd))
     }
 
-    pub fn unadvise_window(&self, hwnd: usize) -> Result<(), ()> {
+    pub fn unadvise_window(&self, hwnd: usize) -> bool {
         call!(self, UnadviseWindow(hwnd))
     }
 

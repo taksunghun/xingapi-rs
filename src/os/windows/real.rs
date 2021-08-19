@@ -3,7 +3,7 @@
 use super::raw::{RECV_REAL_PACKET, XM_RECEIVE_REAL_DATA};
 use super::{executor::Executor, window::Window};
 use crate::data::{self, DecodeError};
-use crate::real::{RecvError, RecvTimeoutError, TryRecvError};
+use crate::real::{RecvError, RecvTimeoutError, SubscribeError, TryRecvError, UnsubscribeError};
 use crate::{euckr, response::RealResponse, Win32Error};
 
 use crossbeam_channel::{Receiver, Sender};
@@ -97,24 +97,44 @@ impl RealWindow {
         Ok(Self { executor, tr_layouts, window, _window_data, rx_res })
     }
 
-    pub fn subscribe<T: AsRef<str>>(&self, tr_code: &str, tickers: &[T]) -> Result<(), ()> {
-        self.executor.handle().advise_real_data(
+    pub fn subscribe<T: AsRef<str>>(
+        &self,
+        tr_code: &str,
+        tickers: &[T],
+    ) -> Result<(), SubscribeError> {
+        if self.executor.handle().advise_real_data(
             *self.window,
             tr_code,
             tickers.iter().map(|t| t.as_ref().into()).collect(),
-        )
+        ) {
+            Ok(())
+        } else {
+            Err(SubscribeError)
+        }
     }
 
-    pub fn unsubscribe<T: AsRef<str>>(&self, tr_code: &str, tickers: &[T]) -> Result<(), ()> {
-        self.executor.handle().unadvise_real_data(
+    pub fn unsubscribe<T: AsRef<str>>(
+        &self,
+        tr_code: &str,
+        tickers: &[T],
+    ) -> Result<(), UnsubscribeError> {
+        if self.executor.handle().unadvise_real_data(
             *self.window,
             tr_code,
             tickers.iter().map(|t| t.as_ref().into()).collect(),
-        )
+        ) {
+            Ok(())
+        } else {
+            Err(UnsubscribeError)
+        }
     }
 
-    pub fn unsubscribe_all(&self) -> Result<(), ()> {
-        self.executor.unadvise_window(*self.window)
+    pub fn unsubscribe_all(&self) -> Result<(), UnsubscribeError> {
+        if self.executor.unadvise_window(*self.window) {
+            Ok(())
+        } else {
+            Err(UnsubscribeError)
+        }
     }
 
     pub fn try_recv(&self) -> Result<RealResponse, TryRecvError> {
