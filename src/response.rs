@@ -7,7 +7,7 @@ use crate::data::{Data, DecodeError};
 use std::time::Duration;
 
 /// 응답 메시지에 대한 트레이트입니다.
-pub trait Message: std::fmt::Display {
+pub trait Response: std::fmt::Display {
     /// 4자리 이상의 응답 코드를 반환합니다. 응답 메시지가 없는 경우 빈 문자열을 반환합니다.
     ///
     /// `0000`-`0999`: 정상, `1000`-`7999`: 업무 오류, `8000`-`9999`: 시스템 오류
@@ -45,7 +45,7 @@ pub struct LoginResponse {
     pub(crate) message: String,
 }
 
-impl Message for LoginResponse {
+impl Response for LoginResponse {
     fn code(&self) -> &str {
         &self.code
     }
@@ -112,7 +112,7 @@ impl QueryResponse {
     }
 }
 
-impl Message for QueryResponse {
+impl Response for QueryResponse {
     fn code(&self) -> &str {
         &self.code
     }

@@ -5,7 +5,7 @@
 use clap::{App, Arg};
 
 use xingapi::data::{Block, Data, DataType};
-use xingapi::{hashmap, response::Message, XingApi};
+use xingapi::{hashmap, response::Response, XingApi};
 
 fn main() {
     let matches = App::new("enum-stock")

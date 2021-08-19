@@ -9,7 +9,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
 use xingapi::data::{Block, Data, DataType};
-use xingapi::{hashmap, real::Real, response::Message, XingApi};
+use xingapi::{hashmap, real::Real, response::Response, XingApi};
 
 enum Market {
     Kospi,

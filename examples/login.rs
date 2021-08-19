@@ -3,7 +3,7 @@
 // 서버 연결 및 로그인 하는 예제입니다.
 
 use clap::{App, Arg};
-use xingapi::{response::Message, XingApi};
+use xingapi::{response::Response, XingApi};
 
 fn main() {
     let matches = App::new("login")

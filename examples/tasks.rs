@@ -6,7 +6,7 @@ use clap::{App, Arg};
 use std::time::Duration;
 
 use xingapi::data::{Block, Data, DataType};
-use xingapi::{hashmap, response::Message, ErrorKind, XingApi};
+use xingapi::{hashmap, response::Response, ErrorKind, XingApi};
 
 fn main() {
     let matches = App::new("tasks")
