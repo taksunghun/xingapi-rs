@@ -38,18 +38,6 @@ macro_rules! hashmap {
     }};
 }
 
-/// 데이터가 요청인지 응답인지에 대한 여부입니다.
-#[derive(Copy, Clone, Debug, PartialEq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub enum DataType {
-    /// 요청
-    #[cfg_attr(feature = "serde", serde(rename = "input"))]
-    Input,
-    /// 응답
-    #[cfg_attr(feature = "serde", serde(rename = "output"))]
-    Output,
-}
-
 /// 단일 및 배열 블록에 대한 열거형 객체입니다.
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -116,6 +104,18 @@ impl Index<usize> for Block {
     fn index(&self, index: usize) -> &Self::Output {
         &self.as_array().expect("not an array block")[index]
     }
+}
+
+/// 데이터가 요청인지 응답인지에 대한 여부입니다.
+#[derive(Copy, Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub enum DataType {
+    /// 요청
+    #[cfg_attr(feature = "serde", serde(rename = "input"))]
+    Input,
+    /// 응답
+    #[cfg_attr(feature = "serde", serde(rename = "output"))]
+    Output,
 }
 
 /// 서버와 주고받는 데이터를 나타내는 객체입니다.
