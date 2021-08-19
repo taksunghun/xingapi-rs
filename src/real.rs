@@ -2,6 +2,7 @@
 
 //! 실시간 TR 관련 모듈입니다.
 
+#[cfg(any(windows, doc))]
 use crate::XingApi;
 use crate::{response::RealResponse, LoadError};
 
