@@ -214,10 +214,10 @@ impl Executor {
 
     pub fn new(path: Option<&Path>) -> Result<Self, EntryError> {
         let path = path.map(|s| s.to_owned());
-        let (tx_result, rx_result) = crossbeam_channel::bounded(1);
 
-        let (tx_func, rx_func) = crossbeam_channel::unbounded::<Func>();
-        let (tx_quit, rx_quit) = crossbeam_channel::bounded::<()>(1);
+        let (tx_result, rx_result) = crossbeam_channel::bounded(1);
+        let (tx_func, rx_func) = crossbeam_channel::unbounded();
+        let (tx_quit, rx_quit) = crossbeam_channel::bounded(1);
 
         let thread_main = move || {
             let load_entry = || -> Result<Pin<Box<Entry>>, EntryError> {
@@ -230,8 +230,7 @@ impl Executor {
 
             let entry = match load_entry() {
                 Ok(mut entry) => {
-                    let entry_ptr = AtomicPtr::new(entry.as_mut().get_mut());
-                    tx_result.send(Ok(entry_ptr)).unwrap();
+                    tx_result.send(Ok(AtomicPtr::new(entry.as_mut().get_mut()))).unwrap();
                     entry
                 }
                 Err(err) => {
@@ -291,6 +290,8 @@ impl Executor {
     }
 
     fn call_func(entry: &Entry, func: Func) {
+        #[allow(unused_must_use)]
+        #[allow(clippy::unit_arg)]
         match func {
             // Win32 API
             Func::CreateWindow { args: (class_name,), tx_ret } => {
@@ -324,64 +325,62 @@ impl Executor {
 
             // XingAPI
             Func::Connect { args: (hwnd, addr, port, timeout, packet_len_limit), tx_ret } => {
-                let _ =
-                    tx_ret.try_send(entry.connect(hwnd, &addr, port, timeout, packet_len_limit));
+                tx_ret.try_send(entry.connect(hwnd, &addr, port, timeout, packet_len_limit));
             }
             Func::IsConnected { args: (), tx_ret } => {
-                let _ = tx_ret.try_send(entry.is_connected());
+                tx_ret.try_send(entry.is_connected());
             }
             Func::Disconnect { args: (), tx_ret } => {
-                entry.disconnect();
-                let _ = tx_ret.try_send(());
+                tx_ret.try_send(entry.disconnect());
             }
             Func::Login { args: (hwnd, id, pw, cert_pw, cert_err_dialog), tx_ret } => {
-                let _ = tx_ret.try_send(entry.login(hwnd, &id, &pw, &cert_pw, cert_err_dialog));
+                tx_ret.try_send(entry.login(hwnd, &id, &pw, &cert_pw, cert_err_dialog));
             }
             Func::Request { args: (hwnd, tr_code, data, continue_key, timeout), tx_ret } => {
                 let ret = entry.request(hwnd, &tr_code, &data, continue_key.as_deref(), timeout);
-                let _ = tx_ret.try_send(ret);
+                tx_ret.try_send(ret);
             }
             Func::AdviseRealData { args: (hwnd, tr_code, data), tx_ret } => {
-                let _ = tx_ret.try_send(entry.advise_real_data(hwnd, &tr_code, &data));
+                tx_ret.try_send(entry.advise_real_data(hwnd, &tr_code, &data));
             }
             Func::UnadviseRealData { args: (hwnd, tr_code, data), tx_ret } => {
-                let _ = tx_ret.try_send(entry.unadvise_real_data(hwnd, &tr_code, &data));
+                tx_ret.try_send(entry.unadvise_real_data(hwnd, &tr_code, &data));
             }
             Func::UnadviseWindow { args: (hwnd,), tx_ret } => {
-                let _ = tx_ret.try_send(entry.unadvise_window(hwnd));
+                tx_ret.try_send(entry.unadvise_window(hwnd));
             }
             Func::GetAccountList { args: (), tx_ret } => {
-                let _ = tx_ret.try_send(entry.get_account_list());
+                tx_ret.try_send(entry.get_account_list());
             }
             Func::GetAccountName { args: (account,), tx_ret } => {
-                let _ = tx_ret.try_send(entry.get_account_name(&account));
+                tx_ret.try_send(entry.get_account_name(&account));
             }
             Func::GetAccountDetailName { args: (account,), tx_ret } => {
-                let _ = tx_ret.try_send(entry.get_account_detail_name(&account));
+                tx_ret.try_send(entry.get_account_detail_name(&account));
             }
             Func::GetAccountNickname { args: (account,), tx_ret } => {
-                let _ = tx_ret.try_send(entry.get_account_nickname(&account));
+                tx_ret.try_send(entry.get_account_nickname(&account));
             }
             Func::GetClientIp { args: (), tx_ret } => {
-                let _ = tx_ret.try_send(entry.get_client_ip());
+                tx_ret.try_send(entry.get_client_ip());
             }
             Func::GetServerName { args: (), tx_ret } => {
-                let _ = tx_ret.try_send(entry.get_server_name());
+                tx_ret.try_send(entry.get_server_name());
             }
             Func::GetApiPath { args: (), tx_ret } => {
-                let _ = tx_ret.try_send(entry.get_api_path());
+                tx_ret.try_send(entry.get_api_path());
             }
             Func::GetTrCountPerSec { args: (tr_code,), tx_ret } => {
-                let _ = tx_ret.try_send(entry.get_tr_count_per_sec(&tr_code));
+                tx_ret.try_send(entry.get_tr_count_per_sec(&tr_code));
             }
             Func::GetTrCountBaseSec { args: (tr_code,), tx_ret } => {
-                let _ = tx_ret.try_send(entry.get_tr_count_base_sec(&tr_code));
+                tx_ret.try_send(entry.get_tr_count_base_sec(&tr_code));
             }
             Func::GetTrCountRequest { args: (tr_code,), tx_ret } => {
-                let _ = tx_ret.try_send(entry.get_tr_count_request(&tr_code));
+                tx_ret.try_send(entry.get_tr_count_request(&tr_code));
             }
             Func::GetTrCountLimit { args: (tr_code,), tx_ret } => {
-                let _ = tx_ret.try_send(entry.get_tr_count_limit(&tr_code));
+                tx_ret.try_send(entry.get_tr_count_limit(&tr_code));
             }
         }
     }
