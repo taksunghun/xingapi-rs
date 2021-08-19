@@ -122,9 +122,12 @@ impl Display for UnsubscribeError {
 
 impl std::error::Error for UnsubscribeError {}
 
+/// 현재 수신할 실시간 TR이 없는 경우 발생하는 에러입니다.
 #[derive(Debug)]
 pub enum TryRecvError {
+    /// 채널에 새로운 메시지 없음
     Empty,
+    /// 채널 송신자 연결 끊김
     Disconnected,
 }
 
@@ -145,6 +148,7 @@ impl From<RecvError> for TryRecvError {
     }
 }
 
+/// 실시간 TR을 더 이상 수신할 수 없는 경우 발생하는 에러입니다.
 #[derive(Debug)]
 pub struct RecvError;
 
@@ -156,9 +160,12 @@ impl std::fmt::Display for RecvError {
 
 impl std::error::Error for RecvError {}
 
+/// 지정된 시간 동안 실시간 TR을 수신하지 못했거나 더 이상 수신할 수 없는 경우 발생하는 에러입니다.
 #[derive(Debug)]
 pub enum RecvTimeoutError {
+    /// 시간 초과
     Timeout,
+    /// 채널 송신자 연결 끊김
     Disconnected,
 }
 
