@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MPL-2.0
 
-use super::XingApi;
-use super::{response::RealResponse, LoadError};
+use crate::XingApi;
+use crate::{response::RealResponse, LoadError};
 
 use std::{sync::Arc, time::Duration};
 
 #[cfg(target_os = "windows")]
-use super::os::windows as imp;
+use crate::os::windows as imp;
 
 /// 실시간 TR를 수신하는 리시버입니다.
 ///
