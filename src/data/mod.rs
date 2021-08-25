@@ -95,14 +95,14 @@ impl Block {
 impl Index<&str> for Block {
     type Output = str;
     fn index(&self, index: &str) -> &Self::Output {
-        &self.as_block().expect("not a single block")[index]
+        &self.as_block().expect("expected a block but found an array")[index]
     }
 }
 
 impl Index<usize> for Block {
     type Output = HashMap<String, String>;
     fn index(&self, index: usize) -> &Self::Output {
-        &self.as_array().expect("not an array block")[index]
+        &self.as_array().expect("expected an array but found a block")[index]
     }
 }
 
