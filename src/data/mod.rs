@@ -124,7 +124,7 @@ pub enum DataType {
 pub struct Data {
     /// TR 코드
     pub code: String,
-    /// 데이터 종류 (요청/응답)
+    /// 데이터 종류 (요청 및 응답)
     pub data_type: DataType,
     /// 블록 테이블
     pub blocks: HashMap<String, Block>,
@@ -147,7 +147,7 @@ pub enum DecodeError {
     MismatchBufferLength,
     /// 배열 크기를 디코딩할 수 없습니다.
     DecodeLength,
-    /// CP949 문자열을 디코딩할 수 없습니다.
+    /// EUC-KR 문자열을 디코딩할 수 없습니다.
     DecodeString,
 }
 
