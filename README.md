@@ -49,7 +49,10 @@ edition = "2018"
 
 [dependencies]
 clap = "3.0.0-beta.2"
-xingapi = "0.2"
+
+[dependencies.xingapi]
+git = "https://github.com/konan8205/xingapi-rs"
+branch = "0.2-blocking"
 ```
 
 프로젝트 디렉터리에 `.cargo/config.toml` 파일을 생성하고 아래와 같이 작성하여
