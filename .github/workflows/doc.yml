@@ -2,9 +2,9 @@ name: doc
 
 on:
   push:
-    branches: [master]
+    branches: ['0.2']
   pull_request:
-    branches: [master]
+    branches: ['0.2']
 
 jobs:
   windows:
