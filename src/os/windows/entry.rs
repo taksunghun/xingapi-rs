@@ -13,7 +13,7 @@ use crate::{
 
 use lazy_static::lazy_static;
 use libloading::os::windows::{Library, Symbol};
-use std::{path::Path, sync::Mutex};
+use std::{ffi::CString, path::Path, sync::Mutex};
 
 use winapi::ctypes::{c_int, c_void};
 use winapi::shared::minwindef::{BOOL, FALSE, LPARAM, TRUE};
@@ -328,55 +328,56 @@ impl Entry {
         unsafe { (self.release_message_data)(lparam) }
     }
 
-    pub fn advise_real_data(&self, hwnd: usize, tr_code: &str, data: &[String]) -> Result<(), ()> {
-        if data.iter().any(|s| !s.is_ascii()) {
+    pub fn advise_real_data(
+        &self,
+        hwnd: usize,
+        tr_code: &str,
+        tickers: &[String],
+    ) -> Result<(), ()> {
+        if tickers.iter().any(|s| !s.is_ascii() || s.contains('\0')) {
             return Err(());
         }
 
-        let max_len = data.iter().map(|s| s.len()).max().unwrap_or(0);
-        let enc_data: String = data.iter().map(|s| format!("{:0>1$}", s, max_len)).collect();
+        for ticker in tickers {
+            let ticker = CString::new(ticker.as_bytes()).unwrap();
 
-        unsafe {
-            if (self.advise_real_data)(
-                hwnd as _,
-                euckr::encode(tr_code).as_ptr(),
-                euckr::encode(&enc_data).as_ptr(),
-                max_len as _,
-            ) == TRUE
-            {
-                Ok(())
-            } else {
-                Err(())
+            unsafe {
+                (self.advise_real_data)(
+                    hwnd as _,
+                    euckr::encode(tr_code).as_ptr(),
+                    ticker.as_ptr() as _,
+                    ticker.as_bytes().len() as _,
+                );
             }
         }
+
+        Ok(())
     }
 
     pub fn unadvise_real_data(
         &self,
         hwnd: usize,
         tr_code: &str,
-        data: &[String],
+        tickers: &[String],
     ) -> Result<(), ()> {
-        if data.iter().any(|s| !s.is_ascii()) {
+        if tickers.iter().any(|s| !s.is_ascii() || s.contains('\0')) {
             return Err(());
         }
 
-        let max_len = data.iter().map(|s| s.len()).max().unwrap_or(0);
-        let enc_data: String = data.iter().map(|s| format!("{:0>1$}", s, max_len)).collect();
+        for ticker in tickers {
+            let ticker = CString::new(ticker.as_bytes()).unwrap();
 
-        unsafe {
-            if (self.unadvise_real_data)(
-                hwnd as _,
-                euckr::encode(tr_code).as_ptr(),
-                euckr::encode(&enc_data).as_ptr(),
-                max_len as _,
-            ) == TRUE
-            {
-                Ok(())
-            } else {
-                Err(())
+            unsafe {
+                (self.unadvise_real_data)(
+                    hwnd as _,
+                    euckr::encode(tr_code).as_ptr(),
+                    ticker.as_ptr() as _,
+                    ticker.as_bytes().len() as _,
+                );
             }
         }
+
+        Ok(())
     }
 
     pub fn unadvise_window(&self, hwnd: usize) -> Result<(), ()> {
