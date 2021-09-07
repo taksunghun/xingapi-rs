@@ -8,7 +8,7 @@ use crate::{euckr, os::windows::raw::XM_OFFSET};
 use crate::{EntryError, Error};
 
 use libloading::os::windows::{Library, Symbol};
-use std::path::Path;
+use std::{ffi::CString, path::Path};
 
 use winapi::ctypes::c_int;
 use winapi::shared::minwindef::{BOOL, FALSE, LPARAM, TRUE};
@@ -306,38 +306,36 @@ impl Entry {
         unsafe { (self.release_message_data)(lparam) }
     }
 
-    pub fn advise_real_data(&self, hwnd: usize, tr_code: &str, data: &[String]) -> bool {
-        if data.iter().any(|s| !s.is_ascii() || s.contains('\0')) {
+    pub fn advise_real_data(&self, hwnd: usize, tr_code: &str, data: &str) -> bool {
+        if !data.is_ascii() || data.contains('\0') {
             return false;
         }
 
-        let max_len = data.iter().map(|s| s.len()).max().unwrap_or(0);
-        let enc_data: String = data.iter().map(|s| format!("{:0>1$}", s, max_len)).collect();
+        let data = CString::new(data.as_bytes()).unwrap();
 
         unsafe {
             (self.advise_real_data)(
                 hwnd as _,
                 euckr::encode(tr_code).as_ptr(),
-                euckr::encode(&enc_data).as_ptr(),
-                max_len as _,
+                data.as_ptr() as _,
+                data.as_bytes().len() as _,
             ) == TRUE
         }
     }
 
-    pub fn unadvise_real_data(&self, hwnd: usize, tr_code: &str, data: &[String]) -> bool {
-        if data.iter().any(|s| !s.is_ascii() || s.contains('\0')) {
+    pub fn unadvise_real_data(&self, hwnd: usize, tr_code: &str, data: &str) -> bool {
+        if !data.is_ascii() || data.contains('\0') {
             return false;
         }
 
-        let max_len = data.iter().map(|s| s.len()).max().unwrap_or(0);
-        let enc_data: String = data.iter().map(|s| format!("{:0>1$}", s, max_len)).collect();
+        let data = CString::new(data.as_bytes()).unwrap();
 
         unsafe {
             (self.unadvise_real_data)(
                 hwnd as _,
                 euckr::encode(tr_code).as_ptr(),
-                euckr::encode(&enc_data).as_ptr(),
-                max_len as _,
+                data.as_ptr() as _,
+                data.as_bytes().len() as _,
             ) == TRUE
         }
     }

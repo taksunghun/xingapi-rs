@@ -92,7 +92,7 @@ fn main() {
 
     let real = Real::new(xingapi.clone()).unwrap();
 
-    real.subscribe(tr_code, &[code]).unwrap();
+    real.subscribe(tr_code, code).unwrap();
     println!("registered: tr_code: {}, market: {}, ticker: {}", tr_code, market, code);
 
     while !QUIT.load(Ordering::Relaxed) {

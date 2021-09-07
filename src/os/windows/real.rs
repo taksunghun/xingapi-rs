@@ -97,32 +97,16 @@ impl RealWindow {
         Ok(Self { executor, tr_layouts, window, _window_data, rx_res })
     }
 
-    pub fn subscribe<T: AsRef<str>>(
-        &self,
-        tr_code: &str,
-        tickers: &[T],
-    ) -> Result<(), SubscribeError> {
-        if self.executor.handle().advise_real_data(
-            *self.window,
-            tr_code,
-            tickers.iter().map(|t| t.as_ref().into()).collect(),
-        ) {
+    pub fn subscribe(&self, tr_code: &str, data: &str) -> Result<(), SubscribeError> {
+        if self.executor.handle().advise_real_data(*self.window, tr_code, data) {
             Ok(())
         } else {
             Err(SubscribeError)
         }
     }
 
-    pub fn unsubscribe<T: AsRef<str>>(
-        &self,
-        tr_code: &str,
-        tickers: &[T],
-    ) -> Result<(), UnsubscribeError> {
-        if self.executor.handle().unadvise_real_data(
-            *self.window,
-            tr_code,
-            tickers.iter().map(|t| t.as_ref().into()).collect(),
-        ) {
+    pub fn unsubscribe(&self, tr_code: &str, data: &str) -> Result<(), UnsubscribeError> {
+        if self.executor.handle().unadvise_real_data(*self.window, tr_code, data) {
             Ok(())
         } else {
             Err(UnsubscribeError)

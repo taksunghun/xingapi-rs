@@ -36,12 +36,8 @@ impl Real {
 
     /// 실시간 TR을 지정된 종목 코드로 등록합니다.
     ///
-    /// `tickers`는 종목 코드 목록이며 종목 코드는 ASCII 문자로만 구성되어야 합니다.
-    pub fn subscribe<T: AsRef<str>>(
-        &self,
-        tr_code: &str,
-        tickers: &[T],
-    ) -> Result<(), SubscribeError> {
+    /// `data`는 InBlock을 나타내며 ASCII 문자로만 구성되어야 합니다.
+    pub fn subscribe(&self, tr_code: &str, tickers: &str) -> Result<(), SubscribeError> {
         #[cfg(not(windows))]
         unimplemented!();
 
@@ -51,12 +47,8 @@ impl Real {
 
     /// 실시간 TR을 지정된 종목 코드로 등록 해제합니다.
     ///
-    /// `tickers`는 종목 코드 목록이며 종목 코드는 ASCII 문자로만 구성되어야 합니다.
-    pub fn unsubscribe<T: AsRef<str>>(
-        &self,
-        tr_code: &str,
-        tickers: &[T],
-    ) -> Result<(), UnsubscribeError> {
+    /// `data`는 InBlock을 나타내며 ASCII 문자로만 구성되어야 합니다.
+    pub fn unsubscribe(&self, tr_code: &str, tickers: &str) -> Result<(), UnsubscribeError> {
         #[cfg(not(windows))]
         unimplemented!();
 
