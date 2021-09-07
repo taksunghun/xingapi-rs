@@ -4,8 +4,8 @@
 
 use crate::data::{Data, DecodeError};
 
+use std::fmt::{self, Debug, Display};
 use std::time::Duration;
-use std::fmt::{self, Display, Debug};
 
 /// 응답 메시지에 대한 트레이트입니다.
 pub trait Response: Display {
