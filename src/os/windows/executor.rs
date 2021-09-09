@@ -10,7 +10,7 @@ use std::panic::{RefUnwindSafe, UnwindSafe};
 use std::sync::atomic::{AtomicPtr, Ordering};
 use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 use std::thread::{self, JoinHandle};
-use std::{mem::MaybeUninit, path::Path, pin::Pin, time::Duration};
+use std::{mem::MaybeUninit, path::Path, pin::Pin};
 
 use winapi::shared::minwindef::TRUE;
 use winapi::um::libloaderapi::GetModuleHandleA;
@@ -240,17 +240,8 @@ impl Executor {
                     }
                 }
 
-                // 일정 시간 동안 thread가 parking 됩니다.
-                if let Ok(func) = rx_func.recv_timeout(Duration::from_micros(100)) {
+                if let Ok(func) = rx_func.try_recv() {
                     Self::call_func(&entry, func);
-
-                    for _ in 1..100 {
-                        if let Ok(func) = rx_func.try_recv() {
-                            Self::call_func(&entry, func);
-                        } else {
-                            break;
-                        }
-                    }
                 } else if quit {
                     break;
                 }
