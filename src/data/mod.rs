@@ -9,7 +9,7 @@ use self::error::{DecodeError, EncodeError};
 use crate::euckr;
 
 use encoding_rs::EUC_KR;
-use std::{borrow::Cow, collections::HashMap, ops::Index};
+use std::{collections::HashMap, ops::Index};
 use xingapi_res::{BlockLayout, TrLayout};
 
 #[cfg(feature = "serde")]
@@ -194,7 +194,7 @@ pub(crate) fn decode_block(
     for field_layout in &block_layout.fields {
         fields.insert(
             field_layout.name.to_owned(),
-            decode_str(&raw_data[offset..offset + field_layout.len])?.into(),
+            decode_str(&raw_data[offset..offset + field_layout.len])?,
         );
         offset += field_layout.len + if tr_layout.attr { 1 } else { 0 };
     }
@@ -224,7 +224,7 @@ pub(crate) fn decode_array_block(
         for field_layout in &block_layout.fields {
             fields.insert(
                 field_layout.name.to_owned(),
-                decode_str(&raw_data[offset..offset + field_layout.len])?.into(),
+                decode_str(&raw_data[offset..offset + field_layout.len])?,
             );
             offset += field_layout.len + if tr_layout.attr { 1 } else { 0 };
         }
@@ -269,7 +269,7 @@ pub(crate) fn decode_non_block(tr_layout: &TrLayout, raw_data: &[u8]) -> Result<
                 for field_layout in &block_layout.fields {
                     fields.insert(
                         field_layout.name.to_owned(),
-                        decode_str(&raw_data[offset..offset + field_layout.len])?.into(),
+                        decode_str(&raw_data[offset..offset + field_layout.len])?,
                     );
                     offset += field_layout.len + if tr_layout.attr { 1 } else { 0 };
                 }
@@ -287,7 +287,7 @@ pub(crate) fn decode_non_block(tr_layout: &TrLayout, raw_data: &[u8]) -> Result<
             for field_layout in &block_layout.fields {
                 fields.insert(
                     field_layout.name.to_owned(),
-                    decode_str(&raw_data[offset..offset + field_layout.len])?.into(),
+                    decode_str(&raw_data[offset..offset + field_layout.len])?,
                 );
                 offset += field_layout.len + if tr_layout.attr { 1 } else { 0 };
             }
@@ -301,10 +301,10 @@ pub(crate) fn decode_non_block(tr_layout: &TrLayout, raw_data: &[u8]) -> Result<
     Ok(data)
 }
 
-fn decode_str(data: &[u8]) -> Result<Cow<str>, DecodeError> {
+fn decode_str(data: &[u8]) -> Result<String, DecodeError> {
     let mut len = data.len();
     for (i, &ch) in data.iter().enumerate() {
-        if ch <= 0x20 {
+        if ch < 0x20 {
             len = i;
             break;
         }
@@ -315,7 +315,7 @@ fn decode_str(data: &[u8]) -> Result<Cow<str>, DecodeError> {
     if had_errors {
         Err(DecodeError::DecodeString)
     } else {
-        Ok(result)
+        Ok(result.trim().to_owned())
     }
 }
 
