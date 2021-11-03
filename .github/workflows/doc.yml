@@ -1,0 +1,64 @@
+name: doc
+
+on:
+  push:
+    paths:
+      - .cargo/**
+      - .github/workflows/**
+      - src/**
+      - Cargo.toml
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          target: i686-pc-windows-msvc
+          override: true
+
+      - uses: actions-rs/cargo@v1
+        env:
+          RUSTDOCFLAGS: --cfg doc_cfg
+        with:
+          command: doc
+          args: |
+            --workspace
+            --no-deps
+            --features serde
+            --target i686-pc-windows-msvc
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: rustdoc_i686-pc-windows-msvc
+          path: target/i686-pc-windows-msvc/doc
+
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          target: x86_64-unknown-linux-gnu
+          override: true
+
+      - uses: actions-rs/cargo@v1
+        env:
+          RUSTDOCFLAGS: --cfg doc_cfg
+        with:
+          command: doc
+          args: |
+            --workspace
+            --no-deps
+            --features serde
+            --target x86_64-unknown-linux-gnu
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: rustdoc_x86_64-unknown-linux-gnu
+          path: target/x86_64-unknown-linux-gnu/doc

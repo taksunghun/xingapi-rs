@@ -1,0 +1,94 @@
+name: test
+
+on:
+  push:
+    paths:
+      - .cargo/**
+      - .github/workflows/**
+      - src/**
+      - Cargo.toml
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout xingapi-rs
+        uses: actions/checkout@v2
+        with:
+          path: ./xingapi-rs
+
+      - name: Checkout xingapi-sdk (windows branch)
+        uses: actions/checkout@v2
+        with:
+          repository: konan8205/xingapi-sdk
+          ref: windows
+          ssh-key: ${{ secrets.SDK_TOKEN }}
+          path: ./xingapi-sdk/windows
+
+      - name: Checkout xingapi-sdk (res branch)
+        uses: actions/checkout@v2
+        with:
+          repository: konan8205/xingapi-sdk
+          ref: res
+          ssh-key: ${{ secrets.SDK_TOKEN }}
+          path: ./xingapi-sdk/res
+
+      - name: Install xingapi-sdk
+        run: |
+          mkdir -p C:/eBEST/xingAPI &&
+          cp -r ./xingapi-sdk/windows/* C:/eBEST/xingAPI &&
+          cp -r ./xingapi-sdk/res/* C:/eBEST/xingAPI
+        shell: bash
+
+      - name: Setup Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          target: i686-pc-windows-msvc
+          override: true
+
+      - name: Build xingapi-rs
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: |
+            --workspace
+            --tests
+            --features serde
+            --target i686-pc-windows-msvc
+            --manifest-path ./xingapi-rs/Cargo.toml
+
+      - name: Test xingapi-rs
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: |
+            --workspace
+            --tests
+            --features serde
+            --target i686-pc-windows-msvc
+            --manifest-path ./xingapi-rs/Cargo.toml
+            --
+            --test-threads 1
+
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout xingapi-rs
+        uses: actions/checkout@v2
+
+      - name: Setup Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          target: x86_64-unknown-linux-gnu
+          override: true
+
+      - name: Build xingapi-rs
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: |
+            --workspace
+            --features serde
+            --target x86_64-unknown-linux-gnu
