@@ -2,4 +2,5 @@
 
 #![cfg_attr(doc_cfg, feature(doc_cfg))]
 
+pub mod data;
 pub mod layout;
