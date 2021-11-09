@@ -30,4 +30,6 @@ features = ["minwindef", "ntdef", "windef", "winbase", "winuser", "winnt", "base
 
 [dev-dependencies]
 base64 = "0.13"
+clap = { version = "2.33", default-features = false }
+ctrlc = "3.2"
 hex-literal = "0.3"
