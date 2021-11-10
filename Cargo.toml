@@ -1,6 +1,6 @@
 [package]
 name = "xingapi"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["Shinwoo Park <natural7530@gmail.com>"]
 edition = "2021"
 description = "A safe and easy wrapper around XingAPI by eBEST."
