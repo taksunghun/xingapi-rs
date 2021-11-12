@@ -6,6 +6,8 @@ edition = "2021"
 description = "A safe and easy wrapper around XingAPI by eBEST."
 repository = "https://github.com/konan8205/xingapi-rs"
 license = "MPL-2.0"
+keywords = ["trade", "trading", "financial", "stock"]
+categories = ["api-bindings"]
 exclude = [".cargo/", ".github/"]
 
 [package.metadata.docs.rs]
