@@ -37,7 +37,7 @@ fn main() {
     xingapi::loader::load().unwrap();
     println!("xingapi loaded");
 
-    print_connection_into();
+    print_connection_info();
 
     xingapi::connect(addr, 20001, Duration::from_secs(10)).unwrap();
     println!("server connected");
@@ -49,7 +49,7 @@ fn main() {
         panic!("login failed: {:?}", res);
     }
 
-    print_connection_into();
+    print_connection_info();
 
     xingapi::disconnect();
     println!("server disconnected");
@@ -58,7 +58,7 @@ fn main() {
     println!("xingapi unloaded");
 }
 
-fn print_connection_into() {
+fn print_connection_info() {
     println!("connection info:");
 
     let accounts = xingapi::accounts();
