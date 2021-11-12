@@ -21,6 +21,7 @@ use serde::{Deserialize, Serialize};
 /// ## 예제
 /// ```rust
 /// use std::collections::HashMap;
+/// use xingapi::hashmap;
 ///
 /// let block: HashMap<String, String> = hashmap! {
 ///     "shcode" => "096530",

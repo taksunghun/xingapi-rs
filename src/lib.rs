@@ -13,19 +13,19 @@
 //! # 초기화 과정
 //! - 먼저 XingAPI를 사용하기 위해 DLL을 불러옵니다.
 //!
-//!   ```rust
+//!   ```ignore
 //!   xingapi::loader::load().unwrap();
 //!   ```
 //!
 //! - 그리고 TR 요청에 필요한 TR 레이아웃도 불러옵니다.
 //!
-//!   ```rust
+//!   ```ignore
 //!   let layout_tbl = xingapi::layout::load().unwrap();
 //!   ```
 //!
 //! - 그 후에 서버 연결 및 로그인을 처리하시면 됩니다.
 //!
-//!   ```rust
+//!   ```ignore
 //!   xingapi::connect(addr, port, Duration::from_secs(30)).unwrap();
 //!
 //!   let res = xingapi::login(id, pw, cert_pw, false).unwrap();
