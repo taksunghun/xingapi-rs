@@ -52,7 +52,6 @@ jobs:
         with:
           command: build
           args: |
-            --workspace
             --tests
             --features serde
             --target i686-pc-windows-msvc
@@ -63,7 +62,6 @@ jobs:
         with:
           command: test
           args: |
-            --workspace
             --tests
             --features serde
             --target i686-pc-windows-msvc
@@ -89,6 +87,5 @@ jobs:
         with:
           command: build
           args: |
-            --workspace
             --features serde
             --target x86_64-unknown-linux-gnu

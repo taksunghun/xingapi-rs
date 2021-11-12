@@ -26,7 +26,6 @@ jobs:
         with:
           command: doc
           args: |
-            --workspace
             --no-deps
             --features serde
             --target i686-pc-windows-msvc
@@ -53,7 +52,6 @@ jobs:
         with:
           command: doc
           args: |
-            --workspace
             --no-deps
             --features serde
             --target x86_64-unknown-linux-gnu
